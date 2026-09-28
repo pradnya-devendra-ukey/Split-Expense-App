@@ -1460,6 +1460,63 @@
     }
 
     // --- EXPENSE HISTORY & RETRIEVAL ---
+    function renderHistoryList(history) {
+      const container = document.getElementById('historyListContainer');
+      let totalOwedSum = 0;
+      document.getElementById('profileTotalSplitsCount').innerText = history.length;
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="app-card p-8 rounded-3xl text-center space-y-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <p class="font-bold text-base" style="color: var(--text-heading);">No expense history yet</p>
+            <p class="text-xs" style="color: var(--text-sub);">Upload a receipt or join a split to see it stored here permanently.</p>
+            <button onclick="switchTab('split')" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Start a Split</button>
+          </div>
+        `;
+        document.getElementById('profileTotalOwedSum').innerText = '₹0.00';
+        return;
+      }
+
+      container.innerHTML = '';
+      history.forEach(item => {
+        totalOwedSum += item.my_share_cost;
+        const card = document.createElement('div');
+        card.className = 'app-card-interactive p-4 sm:p-5 rounded-3xl cursor-pointer flex flex-col gap-3';
+        card.onclick = () => openReceiptDetailsModal(item.id);
+
+        const roleBadge = item.is_uploader 
+          ? '<span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">Host / Paid</span>'
+          : `<span class="border text-[10px] font-bold px-2 py-0.5 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">By ${item.uploader_name}</span>`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-black text-base" style="color: var(--text-heading);">${item.store_name}</span>
+                ${roleBadge}
+              </div>
+              <p class="text-xs font-medium" style="color: var(--text-sub);">${item.created_at} • ${item.items_count} items</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">My Share</p>
+              <p class="text-lg font-black text-emerald-500">₹${item.my_share_cost.toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t text-xs font-medium" style="border-color: var(--border-sub); color: var(--text-sub);">
+            <span>Receipt Code: <b style="color: var(--text-heading);">#${item.id}</b> • Bill: ₹${item.total_amount.toFixed(2)}</span>
+            <span class="font-bold flex items-center gap-1 text-purple-600 dark:text-purple-300">View Breakdown & UPI →</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('profileTotalOwedSum').innerText = `₹${totalOwedSum.toFixed(2)}`;
+    }
+
     async function loadUserHistory() {
       if (!currentUser || currentUser.id === 9999) {
         document.getElementById('historyListContainer').innerHTML = `
@@ -1472,70 +1529,31 @@
         return;
       }
 
-      const container = document.getElementById('historyListContainer');
-      container.innerHTML = '<div class="p-8 text-center font-medium app-card rounded-3xl" style="color: var(--text-sub);">Fetching your expenses...</div>';
+      // Check local cached history first for instant display
+      const cacheKey = `cached_history_${currentUser.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            renderHistoryList(parsed);
+          }
+        } catch(e) {}
+      } else {
+        document.getElementById('historyListContainer').innerHTML = '<div class="p-8 text-center font-medium app-card rounded-3xl" style="color: var(--text-sub);">Fetching your expenses...</div>';
+      }
 
       try {
         const res = await fetch(`${API_BASE}/receipts/history/user/${currentUser.id}`);
         const history = await res.json();
         if (!res.ok) throw new Error(history.detail);
 
-        let totalOwedSum = 0;
-        document.getElementById('profileTotalSplitsCount').innerText = history.length;
-
-        if (history.length === 0) {
-          container.innerHTML = `
-            <div class="app-card p-8 rounded-3xl text-center space-y-3">
-              <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-              </div>
-              <p class="font-bold text-base" style="color: var(--text-heading);">No expense history yet</p>
-              <p class="text-xs" style="color: var(--text-sub);">Upload a receipt or join a split to see it stored here permanently.</p>
-              <button onclick="switchTab('split')" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Start a Split</button>
-            </div>
-          `;
-          document.getElementById('profileTotalOwedSum').innerText = '₹0.00';
-          return;
-        }
-
-        container.innerHTML = '';
-        history.forEach(item => {
-          totalOwedSum += item.my_share_cost;
-          const card = document.createElement('div');
-          card.className = 'app-card-interactive p-4 sm:p-5 rounded-3xl cursor-pointer flex flex-col gap-3';
-          card.onclick = () => openReceiptDetailsModal(item.id);
-
-          const roleBadge = item.is_uploader 
-            ? '<span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">Host / Paid</span>'
-            : `<span class="border text-[10px] font-bold px-2 py-0.5 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">By ${item.uploader_name}</span>`;
-
-          card.innerHTML = `
-            <div class="flex items-start justify-between">
-              <div>
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-black text-base" style="color: var(--text-heading);">${item.store_name}</span>
-                  ${roleBadge}
-                </div>
-                <p class="text-xs font-medium" style="color: var(--text-sub);">${item.created_at} • ${item.items_count} items</p>
-              </div>
-              <div class="text-right">
-                <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">My Share</p>
-                <p class="text-lg font-black text-emerald-500">₹${item.my_share_cost.toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-2 border-t text-xs font-medium" style="border-color: var(--border-sub); color: var(--text-sub);">
-              <span>Receipt Code: <b style="color: var(--text-heading);">#${item.id}</b> • Bill: ₹${item.total_amount.toFixed(2)}</span>
-              <span class="font-bold flex items-center gap-1 text-purple-600 dark:text-purple-300">View Breakdown & UPI →</span>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-
-        document.getElementById('profileTotalOwedSum').innerText = `₹${totalOwedSum.toFixed(2)}`;
-
+        localStorage.setItem(cacheKey, JSON.stringify(history));
+        renderHistoryList(history);
       } catch (err) {
-        container.innerHTML = `<div class="p-6 text-center text-red-500 text-xs">${err.message}</div>`;
+        if (!cached) {
+          document.getElementById('historyListContainer').innerHTML = `<div class="p-6 text-center text-red-500 text-xs">${err.message}</div>`;
+        }
       }
     }
 

@@ -1,3 +1,9 @@
+databases:
+  - name: split-expense-db
+    databaseName: split_expense_db
+    user: split_expense_user
+    plan: free
+
 services:
   - type: web
     name: split-expense-app
@@ -8,4 +14,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: DATABASE_URL
-        value: sqlite:///./expense.db
+        fromDatabase:
+          name: split-expense-db
+          property: connectionString
+

@@ -11,21 +11,22 @@ Base.metadata.create_all(bind=engine)
 
 def migrate_db_columns():
     """Ensure newly added columns exist in sqlite."""
-    with engine.connect() as conn:
-        try:
-            res = conn.execute(text("PRAGMA table_info(users)")).fetchall()
-            cols = [row[1] for row in res]
-            if "username" not in cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(100)"))
-            if "password_hash" not in cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
-            if "upi_id" not in cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN upi_id VARCHAR(100)"))
-            if "created_at" not in cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
-            conn.commit()
-        except Exception:
-            pass
+    try:
+        with engine.connect() as conn:
+            if engine.url.drivername.startswith("sqlite"):
+                res = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+                cols = [row[1] for row in res]
+                if "username" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(100)"))
+                if "password_hash" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+                if "upi_id" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN upi_id VARCHAR(100)"))
+                if "created_at" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
+                conn.commit()
+    except Exception:
+        pass
 
 migrate_db_columns()
 
