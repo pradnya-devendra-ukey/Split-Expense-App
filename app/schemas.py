@@ -66,3 +66,30 @@ class UserShareRequest(BaseModel):
     user_id: int
     item_ids: Optional[List[int]] = None
     shares: Optional[List[UserItemShare]] = None
+
+class UserRegister(BaseModel):
+    name: str
+    username: str
+    password: str
+    email: Optional[str] = None
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserAuthResponse(BaseModel):
+    id: int
+    name: str
+    username: Optional[str] = None
+    email: Optional[str] = None
+    token: str
+
+class ReceiptHistoryItem(BaseModel):
+    id: int
+    store_name: str
+    total_amount: float
+    created_at: str
+    is_uploader: bool
+    uploader_name: str
+    my_share_cost: float
+    items_count: int

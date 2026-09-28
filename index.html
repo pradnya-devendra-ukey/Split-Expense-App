@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Receipt Expense Splitter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SplitExpense - Smart Receipt Splitter</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#4f46e5" />
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" />
@@ -13,537 +13,720 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="SplitExpense" />
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-    .toast-enter { animation: slideIn 0.3s ease-out forwards; }
-    .toast-leave { animation: fadeOut 0.3s ease-in forwards; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade { animation: fadeIn 0.25s ease-out forwards; }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 72px); }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800 p-6 selection:bg-indigo-100 selection:text-indigo-900">
-  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
+<body class="bg-slate-50 text-slate-900 min-h-screen selection:bg-indigo-100 selection:text-indigo-900">
+  <div id="toastContainer" class="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="text-center py-6 relative">
-      <div class="flex justify-center mb-2">
-        <button id="installAppBtn" class="hidden items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-indigo-100 transition shadow-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          Install App to Phone / PC
-        </button>
-      </div>
-      <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-        Receipt Expense Splitter
-      </h1>
-      <p id="subtitle" class="text-gray-500 mt-3 text-lg">Upload, share the code, and split.</p>
-    </header>
-
-    <!-- HOME SCREEN SELECTION -->
-    <div id="homeChoice" class="hidden text-center space-y-10 animate-fade-in">
-      
-      <!-- Show Base App Link -->
-      <div class="max-w-2xl mx-auto bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-center justify-between text-left">
+  <!-- TOP APP HEADER -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 sm:px-6 shadow-sm">
+    <div class="max-w-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchTab('split')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-200">
+          ₹
+        </div>
         <div>
-          <p class="text-indigo-900 font-semibold">Share this app with friends</p>
-          <p class="text-indigo-600 text-sm">They can open this link to join your splits.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="text" id="homeAppUrl" readonly class="text-sm text-gray-600 font-mono bg-white px-3 py-2 rounded-lg border border-indigo-200 w-48 outline-none" />
-          <button onclick="copyHomeLink()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Copy</button>
+          <span class="font-extrabold text-lg text-slate-900 tracking-tight">SplitExpense</span>
         </div>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-        <!-- Host Option -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col justify-center items-center gap-4">
-          <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+      <!-- User Chip / Auth Button -->
+      <div id="headerUserSec" class="flex items-center gap-2">
+        <button id="headerLoginBtn" onclick="openAuthModal('login')" class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3.5 py-2 rounded-xl hover:bg-indigo-100 transition">
+          Login / Sign Up
+        </button>
+        <div id="headerProfileChip" class="hidden flex items-center gap-2 bg-slate-100 pl-2 pr-3 py-1 rounded-full cursor-pointer hover:bg-slate-200 transition" onclick="switchTab('profile')">
+          <div class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs" id="headerAvatar">
+            U
           </div>
-          <h2 class="text-2xl font-semibold">Start a New Split</h2>
-          <p class="text-gray-500 text-sm">Upload a receipt and invite your friends via a code.</p>
-          <button onclick="startHost()" class="mt-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-700 transition active:scale-[0.98]">
-            Upload Receipt
-          </button>
-        </div>
-
-        <!-- Guest Option -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col justify-center items-center gap-4">
-          <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          </div>
-          <h2 class="text-2xl font-semibold">Join a Split</h2>
-          <p class="text-gray-500 text-sm">Enter the receipt code provided by your host.</p>
-          <div class="w-full mt-2 flex gap-2">
-            <input type="number" id="joinReceiptId" placeholder="Code (e.g. 12)" class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-center font-bold" />
-            <button onclick="joinByCode()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-emerald-700 transition active:scale-[0.98]">
-              Join
-            </button>
-          </div>
+          <span id="headerUserName" class="text-xs font-bold text-slate-700 max-w-[90px] truncate">User</span>
         </div>
       </div>
     </div>
+  </header>
 
-    <!-- HOST MODE SECTIONS -->
-    <div id="hostMode" class="hidden space-y-8">
-      <!-- Upload Section -->
-      <section id="hostUploadSec" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 transition-all">
-        <h2 class="text-2xl font-semibold mb-6">Upload Receipt</h2>
-        <form id="uploadForm" class="space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Who paid? (Your Name)</label>
-            <input type="text" id="hostName" required placeholder="e.g. Alice" class="w-full max-w-xs p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-2xl mx-auto p-4 sm:p-6 pb-safe">
+    
+    <!-- ================= TAB 1: SPLIT (HOME) ================= -->
+    <div id="tab-split" class="space-y-6 animate-fade">
+      
+      <!-- Mode Selection (Start Split or Join) -->
+      <div id="splitHomeSec" class="space-y-5">
+        
+        <!-- Welcome Hero Card -->
+        <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+          <div class="absolute -right-6 -bottom-6 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+          <p class="text-xs font-bold tracking-wider uppercase text-indigo-200 mb-1">Instant Bill Splitter</p>
+          <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2">Split any receipt in seconds</h1>
+          <p class="text-indigo-100 text-sm font-medium">Scan bill with Gemini AI, customize item shares (/2, /3, /4, Full), and settle instantly.</p>
+        </div>
+
+        <!-- Action Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Host Card -->
+          <div onclick="startHostFlow()" class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900">Upload Receipt</h2>
+              <p class="text-xs text-slate-500 font-medium">Scan receipt with AI and get a 4-digit code for your group.</p>
+            </div>
+            <button class="mt-4 w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold group-hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
+              Start New Split
+            </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Receipt Image</label>
-            <input type="file" id="receiptImage" accept="image/*" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+
+          <!-- Join Card -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+            <div class="space-y-3">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900">Join a Split</h2>
+              <p class="text-xs text-slate-500 font-medium">Enter the receipt code from your friend to select your items.</p>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <input type="number" id="joinReceiptCodeInput" placeholder="Code (e.g. 18)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+              <button onclick="joinByCode()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+                Join
+              </button>
+            </div>
           </div>
-          <button type="submit" id="uploadBtn" class="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition active:scale-[0.98]">
-            <span>Upload & Extract</span>
+        </div>
+
+        <!-- Share App Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="text-left w-full sm:w-auto">
+            <p class="text-xs font-bold text-slate-800">Share App with Friends</p>
+            <p class="text-xs text-slate-400">They can open it on their phones to join.</p>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button onclick="shareAppUrl()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+              Share Link
+            </button>
+            <button onclick="copyAppUrl()" class="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition" title="Copy App Link">
+              Copy
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= UPLOAD SECTION ================= -->
+      <section id="uploadSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Upload Receipt</h2>
+            <p class="text-xs text-slate-400">Take a photo or upload an image of the bill.</p>
+          </div>
+          <button onclick="cancelUpload()" class="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">Cancel</button>
+        </div>
+
+        <form id="uploadForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Who paid the bill?</label>
+            <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Receipt Image</label>
+            <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-indigo-400 transition bg-slate-50/50 cursor-pointer" onclick="document.getElementById('receiptImageInput').click()">
+              <input type="file" id="receiptImageInput" accept="image/*" required class="hidden" onchange="previewSelectedImage(this)" />
+              <div id="uploadPlaceholder" class="space-y-2">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <p class="text-sm font-bold text-slate-700">Tap to take photo or choose file</p>
+                <p class="text-xs text-slate-400">JPG, PNG, WebP supported</p>
+              </div>
+              <div id="imageSelectedBadge" class="hidden text-sm font-bold text-emerald-600 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span id="selectedFileName">Image Selected</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="uploadSubmitBtn" class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white p-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
+            <span id="uploadBtnText">Extract with Gemini AI</span>
             <svg id="uploadSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           </button>
         </form>
       </section>
 
-      <!-- Host Share Section -->
-      <section id="hostShareSec" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-indigo-500"></div>
-        <h2 class="text-3xl font-extrabold mb-2 text-gray-900 mt-2">Receipt Ready!</h2>
-        <p class="text-gray-500 mb-8 text-lg">Tell everyone to open this app on their phones and enter code:</p>
-        
-        <div class="inline-block bg-gray-900 text-white text-6xl font-black px-12 py-6 rounded-2xl shadow-lg tracking-widest mb-4">
-          <span id="displayReceiptCode"></span>
+      <!-- ================= SHARE CODE & SUMMARY SCREEN ================= -->
+      <section id="hostShareSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Receipt Active
+          </div>
+          <h2 class="text-2xl font-black text-slate-900">Receipt Ready to Split!</h2>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">Share this 4-digit code with your group or send them the direct link:</p>
+          
+          <!-- Big Code Box -->
+          <div class="bg-slate-900 text-white rounded-2xl py-5 px-8 inline-block shadow-lg">
+            <p class="text-xs uppercase font-bold text-slate-400 tracking-widest mb-1">Receipt Code</p>
+            <span id="displayReceiptCode" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-emerald-400"></span>
+          </div>
+
+          <!-- Share Link Box -->
+          <div class="flex items-center justify-center gap-2 pt-2 max-w-md mx-auto">
+            <button onclick="shareDirectReceiptLink()" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+              Share via WhatsApp / App
+            </button>
+            <button onclick="copyDirectReceiptLink()" class="bg-slate-100 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-200 transition">
+              Copy Link
+            </button>
+          </div>
         </div>
-        
-        <p class="text-sm text-gray-400 mt-2">They can also join directly via this link:</p>
-        <div class="flex items-center justify-center gap-2 mt-2 mb-8 max-w-sm mx-auto">
-          <input type="text" id="shareUrl" readonly class="text-sm font-mono bg-white border border-gray-200 px-3 py-2 rounded-lg text-gray-600 w-full outline-none" />
-          <button onclick="copyLink()" class="p-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition border border-indigo-100" title="Copy Link">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-          </button>
-        </div>
-        
-        <div class="border-t border-gray-100 pt-8 mt-4">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Live Summary</h3>
-            <button onclick="fetchSummary(currentHostReceiptId)" class="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition active:scale-[0.98]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+
+        <!-- Live Summary List -->
+        <div class="border-t border-slate-100 pt-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base">Live Who-Owes-What</h3>
+            <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-lg">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
               Refresh
             </button>
           </div>
-          <div id="hostSummaryList" class="divide-y divide-gray-100 bg-gray-50 rounded-xl p-2 border border-gray-100 text-left"></div>
+          <div id="liveSummaryList" class="bg-slate-50 rounded-2xl p-2 border border-slate-100 divide-y divide-slate-100"></div>
         </div>
       </section>
+
+      <!-- ================= ITEM SELECTION (GUEST & HOST SHARE ASSIGNMENT) ================= -->
+      <section id="itemsSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-100 pb-4 gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black text-slate-900">Store Receipt</h2>
+              <span id="receiptCodeBadge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-md">#0</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Select your portion (/2, /3, /4, Full) for each product.</p>
+          </div>
+          <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-left sm:text-right">
+            <p class="text-[10px] uppercase font-bold text-slate-400">Total Bill</p>
+            <p id="receiptGrandTotal" class="text-xl font-black text-slate-900">₹0.00</p>
+          </div>
+        </div>
+
+        <!-- Estimate Banner -->
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Your Share Total</p>
+            <p id="personalEstimatedTotal" class="text-2xl font-black text-indigo-900">₹0.00</p>
+          </div>
+          <div class="text-xs font-bold text-indigo-700 bg-white px-3 py-1.5 rounded-xl border border-indigo-100 shadow-sm">
+            <span id="personalSelectedCount">0</span> items picked
+          </div>
+        </div>
+
+        <!-- Items Container -->
+        <div id="itemsCardsContainer" class="space-y-3"></div>
+
+        <!-- Submit Button -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+          <button onclick="cancelItemSelection()" class="text-xs font-bold text-slate-400 hover:text-slate-600">Back</button>
+          <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
+            <span>Save My Shares</span>
+            <span id="saveSharesBtnBadge" class="bg-indigo-700 text-xs px-2.5 py-1 rounded-md">₹0.00</span>
+          </button>
+        </div>
+      </section>
+
     </div>
 
-    <!-- GUEST MODE SECTIONS (Also used by Host for self-assign) -->
-    <div id="guestMode" class="hidden space-y-8">
-      <!-- Guest Setup -->
-      <section id="guestSetupSec" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 transition-all">
-        <h2 class="text-2xl font-semibold mb-6">Join the Split</h2>
-        <div class="space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">What's your name?</label>
-            <input type="text" id="guestName" required placeholder="e.g. Bob" class="w-full max-w-xs p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
-          </div>
-          <button onclick="joinAsGuest()" id="joinBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition active:scale-[0.98]">
-            Join Receipt
-          </button>
-        </div>
-      </section>
-
-      <!-- Guest Items -->
-      <section id="guestItemsSec" class="hidden bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-gray-100 pb-5 gap-4">
-          <div>
-            <h2 id="guestStoreName" class="text-3xl font-bold text-gray-900"></h2>
-            <p class="text-sm text-gray-500 mt-1">Receipt Code: <span id="guestReceiptId" class="font-bold text-indigo-600"></span></p>
-          </div>
-          <div class="text-left sm:text-right bg-gray-50 px-4 py-3 rounded-xl border border-gray-100">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Receipt Total</p>
-            <p id="guestTotalAmount" class="text-3xl font-black text-gray-900"></p>
-          </div>
-        </div>
-
-        <!-- Live Estimate Banner -->
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
-              ₹
-            </div>
-            <div>
-              <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Your Estimated Total</p>
-              <p id="guestEstimateText" class="text-2xl font-black text-indigo-900">₹0.00</p>
-            </div>
-          </div>
-          <div class="text-xs text-indigo-600 font-medium bg-white px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
-            <span id="guestSelectedCount">0</span> items selected
-          </div>
-        </div>
-
+    <!-- ================= TAB 2: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
+    <div id="tab-history" class="hidden space-y-5 animate-fade">
+      <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-xl font-semibold text-gray-800" id="guestItemsTitle">Choose your share for each item</h3>
-          <p class="text-sm text-gray-500 mt-0.5">Select full, 1/2, 1/3, 1/4, or custom split for each product.</p>
+          <h2 class="text-2xl font-black text-slate-900">Expense History</h2>
+          <p class="text-xs text-slate-500">All receipts you uploaded or participated in.</p>
+        </div>
+        <button onclick="loadUserHistory()" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100 transition flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- History List Container -->
+      <div id="historyListContainer" class="space-y-3">
+        <div class="p-8 text-center text-slate-400 font-medium bg-white rounded-3xl border border-slate-100">
+          Loading your history...
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
+    <div id="tab-profile" class="hidden space-y-5 animate-fade">
+      <h2 class="text-2xl font-black text-slate-900">My Account</h2>
+      
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-2xl shadow-md shadow-indigo-100" id="profileAvatarBig">
+            U
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-slate-900" id="profileNameText">User</h3>
+            <p class="text-xs text-slate-400 font-medium" id="profileUsernameText">@username</p>
+          </div>
         </div>
 
-        <div id="guestItemsContainer" class="space-y-4"></div>
-
-        <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100">
-          <div class="text-sm text-gray-500">
-            Only items with a chosen share will be assigned to you.
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <p class="text-[10px] uppercase font-bold text-slate-400">Total Splits</p>
+            <p id="profileTotalSplitsCount" class="text-xl font-black text-slate-900">0</p>
           </div>
-          <button id="submitGuestBtn" onclick="submitGuestShares()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.98] shadow-lg shadow-indigo-200">
-            <span>Submit My Shares</span>
-            <span id="submitTotalBadge" class="bg-indigo-700 text-xs px-2.5 py-1 rounded-md font-semibold">₹0.00</span>
+          <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+            <p class="text-[10px] uppercase font-bold text-indigo-500">Total Spent/Owed</p>
+            <p id="profileTotalOwedSum" class="text-xl font-black text-indigo-900">₹0.00</p>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+          <button onclick="logoutUser()" class="w-full py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition">
+            Log Out
           </button>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Guest Success -->
-      <section id="guestSuccessSec" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center py-16">
-        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mb-6">
-          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-        </div>
-        <h2 class="text-4xl font-extrabold text-gray-900 mb-3">You're all set!</h2>
-        <p class="text-gray-500 text-lg mb-8">Your shares have been securely saved.</p>
-        
-        <div class="border-t border-gray-100 pt-8 text-left">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Final Summary</h3>
-            <button onclick="fetchSummary(currentGuestReceiptId, 'guestSummaryList')" class="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition active:scale-[0.98]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              Refresh
-            </button>
-          </div>
-          <div id="guestSummaryList" class="divide-y divide-gray-100 bg-gray-50 rounded-xl p-2 border border-gray-100 text-left"></div>
-        </div>
+  </main>
 
-        <button onclick="window.location.href='/'" class="mt-8 text-indigo-600 font-medium hover:underline">Go to Home Screen</button>
-      </section>
+  <!-- ================= RECEIPT RETRIEVAL MODAL ================= -->
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto animate-slide-up shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h3 id="modalStoreTitle" class="text-xl font-bold text-slate-900">Receipt Details</h3>
+          <p id="modalDateSubtitle" class="text-xs text-slate-400"></p>
+        </div>
+        <button onclick="closeReceiptModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm hover:bg-slate-200 transition">✕</button>
+      </div>
+
+      <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+        <div>
+          <p class="text-[10px] font-bold uppercase text-slate-400">Total Bill</p>
+          <p id="modalGrandTotal" class="text-xl font-black text-slate-900">₹0.00</p>
+        </div>
+        <button id="modalJoinBtn" onclick="openActiveReceiptFromModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
+          Edit / Select Shares
+        </button>
+      </div>
+
+      <!-- Who owes what list -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Participant Breakdown</h4>
+        <div id="modalSummaryList" class="space-y-2 bg-slate-50 rounded-2xl p-2 border border-slate-100 divide-y divide-slate-100"></div>
+      </div>
     </div>
   </div>
 
+  <!-- ================= AUTH MODAL (LOGIN / SIGN UP) ================= -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 sm:p-8 space-y-6 animate-fade shadow-2xl">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-md shadow-indigo-100">
+          ₹
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 pt-2" id="authModalTitle">Welcome Back</h3>
+        <p class="text-xs text-slate-400">Manage and retrieve all your split expenses.</p>
+      </div>
+
+      <!-- Tabs (Login / Sign Up) -->
+      <div class="flex bg-slate-100 p-1 rounded-xl">
+        <button id="authTabLogin" onclick="setAuthMode('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm">
+          Login
+        </button>
+        <button id="authTabRegister" onclick="setAuthMode('register')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800">
+          Sign Up
+        </button>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-3.5">
+        <div id="authNameField" class="hidden">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Your Full Name</label>
+          <input type="text" id="authNameInput" placeholder="e.g. Alex Smith" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Username</label>
+          <input type="text" id="authUsernameInput" required placeholder="e.g. alex22" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Password</label>
+          <input type="password" id="authPasswordInput" required placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
+          Log In
+        </button>
+      </form>
+
+      <button onclick="closeAuthModal()" class="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600">
+        Continue as Guest
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-6 py-2 shadow-lg">
+    <div class="max-w-md mx-auto flex items-center justify-around">
+      <button onclick="switchTab('split')" id="navBtn-split" class="flex flex-col items-center gap-1 text-indigo-600 py-1 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        <span class="text-[10px] font-bold">Split</span>
+      </button>
+
+      <button onclick="switchTab('history')" id="navBtn-history" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 py-1 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span class="text-[10px] font-bold">History</span>
+      </button>
+
+      <button onclick="switchTab('profile')" id="navBtn-profile" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 py-1 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        <span class="text-[10px] font-bold">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- JAVASCRIPT LOGIC -->
   <script>
-    const API_BASE = window.location.origin; 
+    const API_BASE = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
     const receiptParam = urlParams.get('receipt_id');
-    
-    // Globals
-    let currentHostReceiptId = null;
-    let currentGuestUser = null;
-    let currentGuestReceiptId = receiptParam;
+
+    // State
+    let currentUser = JSON.parse(localStorage.getItem('split_user') || 'null');
+    let activeReceiptId = receiptParam ? parseInt(receiptParam) : null;
+    let activeReceiptData = null;
     let currentReceiptItems = [];
-    // Map of itemId -> { fraction: float, denom: number, type: 'none'|'full'|'1/2'|'1/3'|'1/4'|'custom' }
     let itemSharesState = {};
+    let currentTab = 'split';
+    let authMode = 'login';
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
-      toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-lg ${bgColor} toast-enter`;
-      toast.innerHTML = `<p class="font-medium text-sm">${message}</p>`;
+      const bg = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+      toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl text-white shadow-xl ${bg} pointer-events-auto text-xs font-bold animate-slide-up`;
+      toast.innerHTML = `<span>${message}</span>`;
       container.appendChild(toast);
-      setTimeout(() => {
-        toast.classList.replace('toast-enter', 'toast-leave');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
+      setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- INIT ---
-    if (receiptParam) {
-      document.getElementById('guestMode').classList.remove('hidden');
-      document.getElementById('subtitle').innerText = "Select your shares for each item.";
-    } else {
-      document.getElementById('homeChoice').classList.remove('hidden');
-      
-      // Initialize Home Link
-      async function initHomeLink() {
-        let baseLink = window.location.origin;
-        try {
-          const ipRes = await fetch(`${API_BASE}/network-ip`);
-          const ipData = await ipRes.json();
-          const port = window.location.port || '8000';
-          baseLink = `http://${ipData.ip}:${port}`;
-        } catch(e) {}
-        document.getElementById('homeAppUrl').value = baseLink;
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      updateUserUI();
+      if (receiptParam) {
+        loadReceiptForJoining(parseInt(receiptParam));
       }
-      initHomeLink();
-    }
+    });
 
-    // --- HOME ACTIONS ---
-    function startHost() {
-      document.getElementById('homeChoice').classList.add('hidden');
-      document.getElementById('hostMode').classList.remove('hidden');
-    }
+    function updateUserUI() {
+      const loginBtn = document.getElementById('headerLoginBtn');
+      const chip = document.getElementById('headerProfileChip');
+      const uploaderInput = document.getElementById('hostUploaderName');
 
-    function joinByCode() {
-      const code = document.getElementById('joinReceiptId').value.trim();
-      if (!code) return showToast('Please enter a valid receipt code', 'error');
-      window.location.href = `/?receipt_id=${code}`;
-    }
-
-    async function copyHomeLink() {
-      const link = document.getElementById('homeAppUrl').value;
-      if (link) {
-        await navigator.clipboard.writeText(link);
-        showToast("App Link copied to clipboard!");
+      if (currentUser) {
+        loginBtn.classList.add('hidden');
+        chip.classList.remove('hidden');
+        document.getElementById('headerAvatar').innerText = (currentUser.name || 'U')[0].toUpperCase();
+        document.getElementById('headerUserName').innerText = currentUser.name;
+        document.getElementById('profileAvatarBig').innerText = (currentUser.name || 'U')[0].toUpperCase();
+        document.getElementById('profileNameText').innerText = currentUser.name;
+        document.getElementById('profileUsernameText').innerText = `@${currentUser.username || 'user'}`;
+        if (uploaderInput) uploaderInput.value = currentUser.name;
+      } else {
+        loginBtn.classList.remove('hidden');
+        chip.classList.add('hidden');
       }
     }
 
-    async function copyLink() {
-      const link = document.getElementById('shareUrl').value;
-      if (link) {
-        await navigator.clipboard.writeText(link);
-        showToast("Link copied to clipboard!");
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      currentTab = tab;
+      ['split', 'history', 'profile'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const navBtn = document.getElementById(`navBtn-${t}`);
+        if (t === tab) {
+          tabEl.classList.remove('hidden');
+          navBtn.className = 'flex flex-col items-center gap-1 text-indigo-600 py-1 transition';
+        } else {
+          tabEl.classList.add('hidden');
+          navBtn.className = 'flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 py-1 transition';
+        }
+      });
+
+      if (tab === 'history') {
+        if (!currentUser) {
+          openAuthModal('login');
+        } else {
+          loadUserHistory();
+        }
       }
     }
 
-    // --- HOST LOGIC ---
-    document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
+    // --- AUTH MODAL ---
+    function openAuthModal(mode = 'login') {
+      authMode = mode;
+      setAuthMode(mode);
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const tabLogin = document.getElementById('authTabLogin');
+      const tabReg = document.getElementById('authTabRegister');
+      const nameField = document.getElementById('authNameField');
+      const title = document.getElementById('authModalTitle');
+      const submitBtn = document.getElementById('authSubmitBtn');
+
+      if (mode === 'login') {
+        tabLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm';
+        tabReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800';
+        nameField.classList.add('hidden');
+        title.innerText = 'Welcome Back';
+        submitBtn.innerText = 'Log In';
+      } else {
+        tabReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm';
+        tabLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800';
+        nameField.classList.remove('hidden');
+        title.innerText = 'Create Account';
+        submitBtn.innerText = 'Create Account';
+      }
+    }
+
+    async function handleAuthSubmit(e) {
       e.preventDefault();
-      const hostName = document.getElementById('hostName').value.trim();
-      const fileInput = document.getElementById('receiptImage');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const spinner = document.getElementById('uploadSpinner');
+      const username = document.getElementById('authUsernameInput').value.trim();
+      const password = document.getElementById('authPasswordInput').value;
+      const name = document.getElementById('authNameInput').value.trim() || username;
 
-      if (!hostName) return showToast('Please enter your name', 'error');
-      if (!fileInput.files[0]) return showToast('Select an image file', 'error');
+      const endpoint = authMode === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
+      const payload = authMode === 'login' ? { username, password } : { name, username, password };
 
-      uploadBtn.disabled = true;
-      uploadBtn.classList.add('opacity-75');
-      spinner.classList.remove('hidden');
+      const btn = document.getElementById('authSubmitBtn');
+      btn.disabled = true;
+      btn.innerText = 'Please wait...';
 
       try {
-        // 1. Create User
-        const userRes = await fetch(`${API_BASE}/users/bulk`, {
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ names: [hostName] })
+          body: JSON.stringify(payload)
         });
-        const userData = await userRes.json();
-        if (!userRes.ok) throw new Error(userData.detail);
-        const hostUserId = userData[0].id;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Authentication failed');
 
-        // 2. Upload Receipt
+        currentUser = data;
+        localStorage.setItem('split_user', JSON.stringify(data));
+        showToast(`Welcome, ${data.name}!`);
+        closeAuthModal();
+        updateUserUI();
+        if (currentTab === 'history') loadUserHistory();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = authMode === 'login' ? 'Log In' : 'Create Account';
+      }
+    }
+
+    function logoutUser() {
+      if (confirm('Are you sure you want to log out?')) {
+        currentUser = null;
+        localStorage.removeItem('split_user');
+        updateUserUI();
+        switchTab('split');
+        showToast('Logged out successfully');
+      }
+    }
+
+    // --- SPLIT & HOST ACTIONS ---
+    function startHostFlow() {
+      if (!currentUser) {
+        openAuthModal('login');
+        return;
+      }
+      document.getElementById('splitHomeSec').classList.add('hidden');
+      document.getElementById('uploadSection').classList.remove('hidden');
+    }
+
+    function cancelUpload() {
+      document.getElementById('uploadSection').classList.add('hidden');
+      document.getElementById('splitHomeSec').classList.remove('hidden');
+    }
+
+    function previewSelectedImage(input) {
+      if (input.files && input.files[0]) {
+        document.getElementById('uploadPlaceholder').classList.add('hidden');
+        const badge = document.getElementById('imageSelectedBadge');
+        badge.classList.remove('hidden');
+        document.getElementById('selectedFileName').innerText = input.files[0].name;
+      }
+    }
+
+    document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('hostUploaderName').value.trim();
+      const fileInput = document.getElementById('receiptImageInput');
+      const submitBtn = document.getElementById('uploadSubmitBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      const btnText = document.getElementById('uploadBtnText');
+
+      if (!name) return showToast('Please enter your name', 'error');
+      if (!fileInput.files[0]) return showToast('Select an image file', 'error');
+
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+      btnText.innerText = 'Analyzing with Gemini AI...';
+
+      try {
+        let uploaderId = currentUser ? currentUser.id : null;
+        if (!uploaderId) {
+          const userRes = await fetch(`${API_BASE}/users/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ names: [name] })
+          });
+          const userData = await userRes.json();
+          if (!userRes.ok) throw new Error(userData.detail);
+          uploaderId = userData[0].id;
+          currentUser = userData[0];
+          localStorage.setItem('split_user', JSON.stringify(userData[0]));
+          updateUserUI();
+        }
+
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
-        const uploadRes = await fetch(`${API_BASE}/receipts/scan?uploader_id=${hostUserId}`, {
+        const uploadRes = await fetch(`${API_BASE}/receipts/scan?uploader_id=${uploaderId}`, {
           method: 'POST',
           body: formData
         });
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.detail);
+        const receipt = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(receipt.detail);
 
-        currentHostReceiptId = uploadData.id;
+        activeReceiptId = receipt.id;
         showToast('Receipt scanned successfully!');
 
-        // 3. Show Code & Items for Host
-        document.getElementById('hostUploadSec').classList.add('hidden');
-        document.getElementById('hostShareSec').classList.remove('hidden');
-        document.getElementById('displayReceiptCode').innerText = currentHostReceiptId;
+        // Display Share Screen
+        document.getElementById('uploadSection').classList.add('hidden');
+        document.getElementById('hostShareSection').classList.remove('hidden');
+        document.getElementById('displayReceiptCode').innerText = activeReceiptId;
 
-        // Fetch IP for Link
-        let shareLink = `${window.location.origin}/?receipt_id=${currentHostReceiptId}`;
-        try {
-          const ipRes = await fetch(`${API_BASE}/network-ip`);
-          const ipData = await ipRes.json();
-          const port = window.location.port || '8000';
-          shareLink = `http://${ipData.ip}:${port}/?receipt_id=${currentHostReceiptId}`;
-        } catch(e) {}
-        document.getElementById('shareUrl').value = shareLink;
-
-        // Setup host as guest so they can assign their own shares
-        currentGuestReceiptId = currentHostReceiptId;
-        currentGuestUser = { id: hostUserId, name: hostName };
-        const receiptRes = await fetch(`${API_BASE}/receipts/${currentGuestReceiptId}`);
-        const receiptData = await receiptRes.json();
-        
-        document.getElementById('guestItemsTitle').innerText = "Select your shares (Host)";
-        document.getElementById('guestMode').classList.remove('hidden');
-        document.getElementById('guestSetupSec').classList.add('hidden');
-        
-        renderGuestItems(receiptData);
-        document.getElementById('guestItemsSec').classList.remove('hidden');
-
-        fetchSummary(currentHostReceiptId); // initial empty fetch
+        // Render host self-assignment below
+        renderItemsSelection(receipt);
+        document.getElementById('itemsSection').classList.remove('hidden');
+        fetchSummary(activeReceiptId, 'liveSummaryList');
 
       } catch (err) {
         showToast(`Error: ${err.message}`, 'error');
       } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.classList.remove('opacity-75');
+        submitBtn.disabled = false;
         spinner.classList.add('hidden');
+        btnText.innerText = 'Extract with Gemini AI';
       }
     });
 
-    async function fetchSummary(receiptId, targetListId = 'hostSummaryList') {
-      if (!receiptId) return;
+    // --- JOIN FLOW ---
+    function joinByCode() {
+      const code = document.getElementById('joinReceiptCodeInput').value.trim();
+      if (!code) return showToast('Please enter receipt code', 'error');
+      loadReceiptForJoining(parseInt(code));
+    }
+
+    async function loadReceiptForJoining(receiptId) {
+      activeReceiptId = receiptId;
       try {
-        const res = await fetch(`${API_BASE}/split/summary/${receiptId}`);
+        const res = await fetch(`${API_BASE}/receipts/${receiptId}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail);
+        if (!res.ok) throw new Error('Receipt code not found');
 
-        const list = document.getElementById(targetListId);
-        list.innerHTML = '';
-        
-        if (data.length === 0) {
-          list.innerHTML = '<div class="p-6 text-center text-gray-500 font-medium">No shares assigned yet.</div>';
-        } else {
-          data.forEach(row => {
-            const div = document.createElement('div');
-            div.className = 'flex flex-col p-4 hover:bg-white transition-colors rounded-xl border-b border-gray-100 last:border-0';
-            
-            let itemsHtml = (row.items && row.items.length > 0) 
-              ? row.items.map(i => `
-                  <div class="flex justify-between items-center text-sm text-gray-600 mt-2 py-1 border-b border-gray-50 last:border-0">
-                    <div class="flex items-center gap-2 truncate pr-4">
-                      <span class="font-medium text-gray-800 truncate">${i.item_name}</span>
-                      <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100 flex-shrink-0">${i.portion_label || '1/1'}</span>
-                    </div>
-                    <span class="font-bold text-gray-900 whitespace-nowrap">₹${i.cost.toFixed(2)}</span>
-                  </div>
-                `).join('')
-              : '<div class="text-sm text-gray-400 mt-1">No items selected</div>';
-
-            div.innerHTML = `
-              <div class="flex justify-between items-center cursor-pointer select-none" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                <div class="flex items-center gap-3">
-                  <div class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
-                    ${(row.user_name || 'U')[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <span class="font-bold text-lg text-gray-800">${row.user_name || 'User'}</span>
-                    <span class="text-xs text-gray-400 ml-2 font-medium">(${row.items ? row.items.length : 0} items)</span>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-2xl font-black text-indigo-600">₹${row.total_owed.toFixed(2)}</span>
-                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-              </div>
-              <div class="hidden pl-12 pr-2 pt-3 mt-3 border-t border-gray-100">
-                ${itemsHtml}
-              </div>
-            `;
-            list.appendChild(div);
-          });
-        }
+        document.getElementById('splitHomeSec').classList.add('hidden');
+        document.getElementById('uploadSection').classList.add('hidden');
+        renderItemsSelection(data);
+        document.getElementById('itemsSection').classList.remove('hidden');
       } catch (err) {
-        showToast(`Error: ${err.message}`, 'error');
+        showToast(err.message, 'error');
       }
     }
 
-    // --- GUEST LOGIC ---
-    async function joinAsGuest() {
-      const name = document.getElementById('guestName').value.trim();
-      if (!name) return showToast('Please enter your name', 'error');
-      const btn = document.getElementById('joinBtn');
-      btn.innerText = 'Joining...';
-      btn.disabled = true;
-
-      try {
-        // Create user
-        const userRes = await fetch(`${API_BASE}/users/bulk`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ names: [name] })
-        });
-        const userData = await userRes.json();
-        if (!userRes.ok) throw new Error(userData.detail);
-        currentGuestUser = userData[0];
-
-        // Fetch receipt items
-        const receiptRes = await fetch(`${API_BASE}/receipts/${currentGuestReceiptId}`);
-        const receiptData = await receiptRes.json();
-        if (!receiptRes.ok) throw new Error(receiptData.detail);
-
-        renderGuestItems(receiptData);
-        document.getElementById('guestSetupSec').classList.add('hidden');
-        document.getElementById('guestItemsSec').classList.remove('hidden');
-      } catch (err) {
-        showToast(`Error: ${err.message}`, 'error');
-        btn.innerText = 'Join Receipt';
-        btn.disabled = false;
-      }
+    function cancelItemSelection() {
+      document.getElementById('itemsSection').classList.add('hidden');
+      document.getElementById('splitHomeSec').classList.remove('hidden');
     }
 
-    function renderGuestItems(data) {
-      document.getElementById('guestStoreName').innerText = data.store_name || 'Store Receipt';
-      document.getElementById('guestReceiptId').innerText = data.id;
-      document.getElementById('guestTotalAmount').innerText = `₹${data.total_amount.toFixed(2)}`;
+    // --- ITEM SHARE LOGIC (/2, /3, /4, Full, Custom) ---
+    function renderItemsSelection(data) {
+      activeReceiptData = data;
+      document.getElementById('receiptStoreTitle').innerText = data.store_name || 'Store Receipt';
+      document.getElementById('receiptCodeBadge').innerText = `#${data.id}`;
+      document.getElementById('receiptGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
 
       currentReceiptItems = data.items || [];
       itemSharesState = {};
 
-      // Initialize state for each item
-      currentReceiptItems.forEach(item => {
-        itemSharesState[item.id] = {
-          fraction: 0,
-          denom: 1,
-          type: 'none'
-        };
-      });
-
-      const container = document.getElementById('guestItemsContainer');
+      const container = document.getElementById('itemsCardsContainer');
       container.innerHTML = '';
 
       if (currentReceiptItems.length === 0) {
-        container.innerHTML = '<div class="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">No items found on this receipt.</div>';
+        container.innerHTML = '<div class="p-6 text-center text-slate-400 font-medium">No items found on receipt.</div>';
         updateEstimate();
         return;
       }
 
       currentReceiptItems.forEach(item => {
-        const itemCard = document.createElement('div');
-        itemCard.id = `item-card-${item.id}`;
-        itemCard.className = 'p-5 bg-white rounded-2xl border-2 border-gray-100 transition-all shadow-sm space-y-3';
-        
-        itemCard.innerHTML = `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        itemSharesState[item.id] = { fraction: 0, denom: 1, type: 'none' };
+
+        const card = document.createElement('div');
+        card.id = `item-card-${item.id}`;
+        card.className = 'p-4 bg-white rounded-2xl border-2 border-slate-100 transition-all shadow-sm space-y-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
             <div>
-              <p class="font-bold text-gray-800 text-lg">${item.item_name}</p>
-              <p class="text-sm font-semibold text-gray-500">Item Total: <span class="text-gray-800 font-bold">₹${item.price.toFixed(2)}</span></p>
+              <p class="font-bold text-slate-800 text-base">${item.item_name}</p>
+              <p class="text-xs font-semibold text-slate-400">Total: ₹${parseFloat(item.price).toFixed(2)}</p>
             </div>
-            <div id="cost-badge-${item.id}" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-bold transition-all">
-              Not Selected (₹0.00)
-            </div>
-          </div>
-
-          <!-- Share Pill Selector -->
-          <div class="pt-1">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Share</p>
-            <div class="flex flex-wrap gap-2">
-              <button type="button" onclick="setItemShare(${item.id}, 'none')" id="btn-none-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-900 text-white border-gray-900 shadow-sm">
-                None (0)
-              </button>
-              <button type="button" onclick="setItemShare(${item.id}, 'full')" id="btn-full-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
-                1/1 Full (100%)
-              </button>
-              <button type="button" onclick="setItemShare(${item.id}, '1/2')" id="btn-1-2-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
-                1/2 Half (/2)
-              </button>
-              <button type="button" onclick="setItemShare(${item.id}, '1/3')" id="btn-1-3-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
-                1/3 Third (/3)
-              </button>
-              <button type="button" onclick="setItemShare(${item.id}, '1/4')" id="btn-1-4-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
-                1/4 (/4)
-              </button>
-              <button type="button" onclick="setItemShare(${item.id}, 'custom')" id="btn-custom-${item.id}" class="share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
-                Custom (/N)
-              </button>
+            <div id="cost-badge-${item.id}" class="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold">
+              ₹0.00
             </div>
           </div>
 
-          <!-- Custom Denominator Stepper (Hidden by default) -->
-          <div id="custom-stepper-${item.id}" class="hidden pt-2 flex items-center gap-3 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-            <span class="text-xs font-bold text-indigo-800">Split between:</span>
-            <div class="flex items-center gap-1.5 bg-white border border-indigo-200 rounded-lg p-1 shadow-sm">
-              <button type="button" onclick="adjustCustomDenom(${item.id}, -1)" class="w-7 h-7 flex items-center justify-center font-bold text-indigo-700 hover:bg-indigo-50 rounded">-</button>
-              <input type="number" id="custom-denom-input-${item.id}" min="1" max="50" value="5" onchange="onCustomDenomChange(${item.id}, this.value)" class="w-12 text-center text-sm font-bold text-gray-800 outline-none" />
-              <button type="button" onclick="adjustCustomDenom(${item.id}, 1)" class="w-7 h-7 flex items-center justify-center font-bold text-indigo-700 hover:bg-indigo-50 rounded">+</button>
+          <!-- Share Selector Pills -->
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button type="button" onclick="setItemShare(${item.id}, 'none')" id="btn-none-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-900 text-white border-slate-900">None</button>
+            <button type="button" onclick="setItemShare(${item.id}, 'full')" id="btn-full-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">Full (1/1)</button>
+            <button type="button" onclick="setItemShare(${item.id}, '1/2')" id="btn-1-2-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">/2 Half</button>
+            <button type="button" onclick="setItemShare(${item.id}, '1/3')" id="btn-1-3-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">/3 Third</button>
+            <button type="button" onclick="setItemShare(${item.id}, '1/4')" id="btn-1-4-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">/4</button>
+            <button type="button" onclick="setItemShare(${item.id}, 'custom')" id="btn-custom-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">/N</button>
+          </div>
+
+          <!-- Custom Denominator Stepper -->
+          <div id="custom-stepper-${item.id}" class="hidden flex items-center gap-2 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 text-xs">
+            <span class="font-bold text-indigo-900">Split among:</span>
+            <div class="flex items-center bg-white border border-indigo-200 rounded-lg p-0.5 shadow-sm">
+              <button type="button" onclick="adjustCustomDenom(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center font-bold text-indigo-700 hover:bg-indigo-50 rounded">-</button>
+              <input type="number" id="custom-denom-input-${item.id}" min="1" max="50" value="5" onchange="onCustomDenomChange(${item.id}, this.value)" class="w-10 text-center font-bold text-slate-800 outline-none text-xs" />
+              <button type="button" onclick="adjustCustomDenom(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center font-bold text-indigo-700 hover:bg-indigo-50 rounded">+</button>
             </div>
-            <span class="text-xs font-medium text-indigo-600">people (1/<span id="custom-denom-label-${item.id}">5</span> share)</span>
+            <span class="text-indigo-600 font-medium">people (1/<span id="custom-denom-label-${item.id}">5</span>)</span>
           </div>
         `;
-        container.appendChild(itemCard);
+        container.appendChild(card);
       });
 
       updateEstimate();
@@ -554,17 +737,12 @@
       if (!state) return;
 
       state.type = type;
-      if (type === 'none') {
-        state.fraction = 0;
-      } else if (type === 'full') {
-        state.fraction = 1.0;
-      } else if (type === '1/2') {
-        state.fraction = 0.5;
-      } else if (type === '1/3') {
-        state.fraction = 1.0 / 3.0;
-      } else if (type === '1/4') {
-        state.fraction = 0.25;
-      } else if (type === 'custom') {
+      if (type === 'none') state.fraction = 0;
+      else if (type === 'full') state.fraction = 1.0;
+      else if (type === '1/2') state.fraction = 0.5;
+      else if (type === '1/3') state.fraction = 1.0 / 3.0;
+      else if (type === '1/4') state.fraction = 0.25;
+      else if (type === 'custom') {
         const input = document.getElementById(`custom-denom-input-${itemId}`);
         const val = input ? parseInt(input.value) || 5 : 5;
         state.denom = val;
@@ -616,88 +794,66 @@
         'custom': document.getElementById(`btn-custom-${itemId}`)
       };
 
-      // Reset button classes
       Object.keys(buttons).forEach(k => {
-        const btn = buttons[k];
-        if (!btn) return;
-        btn.className = 'share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
+        if (buttons[k]) buttons[k].className = 'share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200';
       });
 
-      // Highlight active button
       if (buttons[state.type]) {
-        buttons[state.type].className = 'share-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition-all bg-indigo-600 text-white border-indigo-600 shadow-sm';
+        buttons[state.type].className = 'share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm';
       }
 
-      // Toggle custom stepper visibility
       if (stepper) {
         if (state.type === 'custom') stepper.classList.remove('hidden');
         else stepper.classList.add('hidden');
       }
 
-      // Update Card Border & Cost Badge
-      const myCost = item.price * state.fraction;
-      if (state.type === 'none' || state.fraction <= 0) {
-        card.className = 'p-5 bg-white rounded-2xl border-2 border-gray-100 transition-all shadow-sm space-y-3';
-        badge.className = 'self-start sm:self-auto px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 text-sm font-bold transition-all';
-        badge.innerText = 'Not Selected (₹0.00)';
+      const cost = item.price * state.fraction;
+      if (state.fraction <= 0) {
+        card.className = 'p-4 bg-white rounded-2xl border-2 border-slate-100 transition-all shadow-sm space-y-3';
+        badge.className = 'px-2.5 py-1 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold';
+        badge.innerText = '₹0.00';
       } else {
-        card.className = 'p-5 bg-indigo-50/20 rounded-2xl border-2 border-indigo-500 transition-all shadow-md space-y-3';
-        badge.className = 'self-start sm:self-auto px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-sm font-bold shadow-sm transition-all';
-        
-        let label = '1/1 Full';
-        if (state.type === '1/2') label = '1/2 Share';
-        else if (state.type === '1/3') label = '1/3 Share';
-        else if (state.type === '1/4') label = '1/4 Share';
-        else if (state.type === 'custom') label = `1/${state.denom} Share`;
-
-        badge.innerText = `Your Share: ${label} = ₹${myCost.toFixed(2)}`;
+        card.className = 'p-4 bg-indigo-50/20 rounded-2xl border-2 border-indigo-500 transition-all shadow-md space-y-3';
+        badge.className = 'px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-sm';
+        badge.innerText = `₹${cost.toFixed(2)}`;
       }
     }
 
     function updateEstimate() {
       let total = 0;
       let count = 0;
-
       currentReceiptItems.forEach(item => {
-        const state = itemSharesState[item.id];
-        if (state && state.fraction > 0) {
-          total += item.price * state.fraction;
+        const s = itemSharesState[item.id];
+        if (s && s.fraction > 0) {
+          total += item.price * s.fraction;
           count++;
         }
       });
-
-      const formattedTotal = `₹${total.toFixed(2)}`;
-      document.getElementById('guestEstimateText').innerText = formattedTotal;
-      document.getElementById('guestSelectedCount').innerText = count;
-      document.getElementById('submitTotalBadge').innerText = formattedTotal;
+      const formatted = `₹${total.toFixed(2)}`;
+      document.getElementById('personalEstimatedTotal').innerText = formatted;
+      document.getElementById('personalSelectedCount').innerText = count;
+      document.getElementById('saveSharesBtnBadge').innerText = formatted;
     }
 
-    async function submitGuestShares() {
+    async function submitPersonalShares() {
+      if (!currentUser) {
+        openAuthModal('login');
+        return;
+      }
+
       const activeShares = [];
       currentReceiptItems.forEach(item => {
-        const state = itemSharesState[item.id];
-        if (state && state.fraction > 0) {
-          let label = "1/1 (Full)";
-          if (state.type === '1/2') label = "1/2 Share";
-          else if (state.type === '1/3') label = "1/3 Share";
-          else if (state.type === '1/4') label = "1/4 Share";
-          else if (state.type === 'custom') label = `1/${state.denom} Share`;
-
+        const s = itemSharesState[item.id];
+        if (s && s.fraction > 0) {
           activeShares.push({
             item_id: item.id,
-            fraction: state.fraction,
-            portion_label: label
+            fraction: s.fraction,
+            portion_label: s.type === '1/2' ? '1/2' : (s.type === '1/3' ? '1/3' : (s.type === '1/4' ? '1/4' : (s.type === 'custom' ? `1/${s.denom}` : '1/1')))
           });
         }
       });
 
-      if (activeShares.length === 0) {
-        if (!confirm('You haven\'t selected any share for any product. Submit empty shares?')) return;
-      }
-
-      const btn = document.getElementById('submitGuestBtn');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span>Submitting...</span>';
+      const btn = document.getElementById('saveSharesBtn');
       btn.disabled = true;
 
       try {
@@ -705,63 +861,224 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            receipt_id: parseInt(currentGuestReceiptId),
-            user_id: currentGuestUser.id,
+            receipt_id: activeReceiptId,
+            user_id: currentUser.id,
             shares: activeShares
           })
         });
-
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail);
 
-        // If Host is submitting, just show toast and refresh summary
-        if (currentHostReceiptId) {
-          showToast('Your shares were saved successfully!');
-          fetchSummary(currentHostReceiptId, 'hostSummaryList');
-        } else {
-          // If Guest is submitting, show success screen
-          document.getElementById('guestItemsSec').classList.add('hidden');
-          document.getElementById('guestSuccessSec').classList.remove('hidden');
-          fetchSummary(currentGuestReceiptId, 'guestSummaryList');
-        }
+        showToast('Your shares have been saved!');
+        fetchSummary(activeReceiptId, 'liveSummaryList');
+        document.getElementById('hostShareSection').classList.remove('hidden');
       } catch (err) {
-        showToast(`Error: ${err.message}`, 'error');
+        showToast(err.message, 'error');
       } finally {
-        btn.innerHTML = originalText;
         btn.disabled = false;
       }
     }
 
-    // --- PWA INSTALLATION & SERVICE WORKER ---
-    let deferredPrompt = null;
-    const installBtn = document.getElementById('installAppBtn');
+    // --- SUMMARY RENDERING ---
+    async function fetchSummary(receiptId, targetListId) {
+      if (!receiptId) return;
+      try {
+        const res = await fetch(`${API_BASE}/split/summary/${receiptId}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (installBtn) {
-        installBtn.classList.remove('hidden');
-        installBtn.classList.add('flex');
-      }
-    });
+        const list = document.getElementById(targetListId);
+        if (!list) return;
+        list.innerHTML = '';
 
-    if (installBtn) {
-      installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') {
-            installBtn.classList.add('hidden');
-          }
-          deferredPrompt = null;
+        if (data.length === 0) {
+          list.innerHTML = '<div class="p-4 text-center text-xs font-medium text-slate-400">No participant shares assigned yet.</div>';
+          return;
         }
-      });
+
+        data.forEach(row => {
+          const div = document.createElement('div');
+          div.className = 'p-3 flex flex-col gap-1';
+          
+          let itemsHtml = (row.items && row.items.length > 0)
+            ? row.items.map(i => `
+                <div class="flex justify-between text-xs text-slate-600">
+                  <span class="truncate pr-2">${i.item_name} <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">(${i.portion_label || '1/1'})</span></span>
+                  <span class="font-bold text-slate-900 whitespace-nowrap">₹${i.cost.toFixed(2)}</span>
+                </div>
+              `).join('')
+            : '<div class="text-xs text-slate-400">No items selected</div>';
+
+          div.innerHTML = `
+            <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                  ${(row.user_name || 'U')[0].toUpperCase()}
+                </div>
+                <span class="font-bold text-sm text-slate-800">${row.user_name}</span>
+              </div>
+              <span class="font-black text-base text-indigo-600">₹${row.total_owed.toFixed(2)}</span>
+            </div>
+            <div class="hidden pt-2 pl-9 space-y-1">
+              ${itemsHtml}
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
     }
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
-      });
+    // --- EXPENSE HISTORY & RETRIEVAL ---
+    async function loadUserHistory() {
+      if (!currentUser) return;
+      const container = document.getElementById('historyListContainer');
+      container.innerHTML = '<div class="p-8 text-center text-slate-400 font-medium">Fetching your expenses...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/receipts/history/user/${currentUser.id}`);
+        const history = await res.json();
+        if (!res.ok) throw new Error(history.detail);
+
+        let totalOwedSum = 0;
+        document.getElementById('profileTotalSplitsCount').innerText = history.length;
+
+        if (history.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 text-center space-y-3">
+              <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              </div>
+              <p class="font-bold text-slate-700">No expense history yet</p>
+              <p class="text-xs text-slate-400">Upload a receipt or join a split to see it stored here permanently.</p>
+              <button onclick="switchTab('split')" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Start a Split</button>
+            </div>
+          `;
+          document.getElementById('profileTotalOwedSum').innerText = '₹0.00';
+          return;
+        }
+
+        container.innerHTML = '';
+        history.forEach(item => {
+          totalOwedSum += item.my_share_cost;
+          const card = document.createElement('div');
+          card.className = 'bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col gap-3';
+          card.onclick = () => openReceiptDetailsModal(item.id);
+
+          const roleBadge = item.is_uploader 
+            ? '<span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md">Host / Paid</span>'
+            : `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md">By ${item.uploader_name}</span>`;
+
+          card.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-black text-slate-900 text-base">${item.store_name}</span>
+                  ${roleBadge}
+                </div>
+                <p class="text-xs text-slate-400 font-medium">${item.created_at} • ${item.items_count} items</p>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] font-bold uppercase text-slate-400">My Share</p>
+                <p class="text-lg font-black text-emerald-600">₹${item.my_share_cost.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-50 text-xs text-slate-500 font-medium">
+              <span>Receipt Code: <b class="text-slate-800">#${item.id}</b> • Bill: ₹${item.total_amount.toFixed(2)}</span>
+              <span class="text-indigo-600 font-bold flex items-center gap-1">View Breakdown →</span>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        document.getElementById('profileTotalOwedSum').innerText = `₹${totalOwedSum.toFixed(2)}`;
+
+      } catch (err) {
+        container.innerHTML = `<div class="p-6 text-center text-red-500 text-xs">${err.message}</div>`;
+      }
+    }
+
+    // --- RECEIPT DETAILS MODAL ---
+    let modalReceiptId = null;
+    async function openReceiptDetailsModal(receiptId) {
+      modalReceiptId = receiptId;
+      try {
+        const res = await fetch(`${API_BASE}/receipts/${receiptId}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error('Receipt not found');
+
+        document.getElementById('modalStoreTitle').innerText = `${data.store_name || 'Store Receipt'} (#${data.id})`;
+        document.getElementById('modalDateSubtitle').innerText = 'Stored in memory';
+        document.getElementById('modalGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
+
+        fetchSummary(receiptId, 'modalSummaryList');
+        document.getElementById('receiptModal').classList.remove('hidden');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receiptModal').classList.add('hidden');
+    }
+
+    function openActiveReceiptFromModal() {
+      if (modalReceiptId) {
+        closeReceiptModal();
+        switchTab('split');
+        loadReceiptForJoining(modalReceiptId);
+      }
+    }
+
+    // --- SHARING HELPERS ---
+    function getShareableAppUrl(receiptId = null) {
+      const base = window.location.origin;
+      return receiptId ? `${base}/?receipt_id=${receiptId}` : base;
+    }
+
+    async function shareAppUrl() {
+      const url = getShareableAppUrl();
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'SplitExpense App',
+            text: 'Split bills and receipts with custom shares instantly:',
+            url: url
+          });
+        } catch(e) {}
+      } else {
+        await navigator.clipboard.writeText(url);
+        showToast('App link copied to clipboard!');
+      }
+    }
+
+    async function copyAppUrl() {
+      await navigator.clipboard.writeText(getShareableAppUrl());
+      showToast('App link copied to clipboard!');
+    }
+
+    async function shareDirectReceiptLink() {
+      const url = getShareableAppUrl(activeReceiptId);
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Split Receipt #${activeReceiptId}`,
+            text: `Join my split receipt #${activeReceiptId} to pick your shares:`,
+            url: url
+          });
+        } catch(e) {}
+      } else {
+        await navigator.clipboard.writeText(url);
+        showToast('Receipt link copied!');
+      }
+    }
+
+    async function copyDirectReceiptLink() {
+      const url = getShareableAppUrl(activeReceiptId);
+      await navigator.clipboard.writeText(url);
+      showToast('Receipt link copied to clipboard!');
     }
   </script>
 </body>
