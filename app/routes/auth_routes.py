@@ -35,25 +35,29 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == user_email).first():
         user_email = f"{username}_{secrets.token_hex(3)}@split.app"
 
-    new_user = models.User(
-        name=name,
-        username=username,
-        email=user_email,
-        password_hash=pwd_hash
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        new_user = models.User(
+            name=name,
+            username=username,
+            email=user_email,
+            password_hash=pwd_hash
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    token = f"token_{new_user.id}_{secrets.token_hex(8)}"
-    return schemas.UserAuthResponse(
-        id=new_user.id,
-        name=new_user.name,
-        username=new_user.username,
-        email=new_user.email,
-        upi_id=new_user.upi_id,
-        token=token
-    )
+        token = f"token_{new_user.id}_{secrets.token_hex(8)}"
+        return schemas.UserAuthResponse(
+            id=new_user.id,
+            name=new_user.name,
+            username=new_user.username,
+            email=new_user.email,
+            upi_id=new_user.upi_id,
+            token=token
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post("/login", response_model=schemas.UserAuthResponse)
 def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):

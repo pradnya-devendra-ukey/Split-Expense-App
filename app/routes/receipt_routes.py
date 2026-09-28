@@ -16,6 +16,14 @@ async def scan_and_save_receipt(
         image_bytes = await file.read()
         parsed_data = parse_receipt_with_gemini(image_bytes, mime_type=file.content_type or "image/jpeg")
 
+        # Check if uploader exists in database
+        uploader = db.query(models.User).filter(models.User.id == uploader_id).first()
+        if not uploader:
+            raise HTTPException(
+                status_code=400,
+                detail="User session expired or user does not exist in database. Please log out and sign in or create an account."
+            )
+
         # Create Receipt DB Record
         db_receipt = models.Receipt(
             uploader_id=uploader_id,

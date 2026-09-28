@@ -40,15 +40,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def sync_postgres_sequences():
+    """Ensure PostgreSQL sequences are synced with MAX(id) if rows were manually inserted."""
+    try:
+        with engine.connect() as conn:
+            if not engine.url.drivername.startswith("sqlite"):
+                for table in ["users", "receipts", "items", "item_shares"]:
+                    conn.execute(text(f"""
+                        SELECT setval(
+                            pg_get_serial_sequence('{table}', 'id'),
+                            COALESCE((SELECT MAX(id) FROM {table}), 1),
+                            (SELECT MAX(id) IS NOT NULL FROM {table})
+                        );
+                    """))
+                conn.commit()
+    except Exception:
+        pass
+
 def seed_users():
     db = SessionLocal()
-    for user_id, name in [(1, "Alice"), (2, "Bob"), (3, "Charlie")]:
-        if not db.query(models.User).filter(models.User.id == user_id).first():
-            db.add(models.User(id=user_id, name=name, email=f"user{user_id}@example.com", username=name.lower()))
-    db.commit()
-    db.close()
+    try:
+        for name in ["Alice", "Bob", "Charlie"]:
+            uname = name.lower()
+            if not db.query(models.User).filter(models.User.username == uname).first():
+                db.add(models.User(name=name, email=f"{uname}@example.com", username=uname))
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
 
 seed_users()
+sync_postgres_sequences()
 
 app.include_router(auth_routes.router)
 app.include_router(receipt_routes.router)
