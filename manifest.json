@@ -1,14 +1,15 @@
 {
-  "name": "Receipt Expense Splitter",
+  "name": "SplitExpense - Receipt Splitter",
   "short_name": "SplitExpense",
-  "description": "AI-Powered Receipt Expense Splitter with Custom Shares",
+  "description": "AI-Powered Receipt Expense Splitter with Custom Shares & Memory",
   "start_url": "/",
   "scope": "/",
   "id": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "display_override": ["standalone", "fullscreen", "window-controls-overlay"],
+  "orientation": "portrait-primary",
+  "background_color": "#09070F",
+  "theme_color": "#09070F",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
@@ -24,4 +25,3 @@
     }
   ]
 }
-
