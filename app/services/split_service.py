@@ -35,6 +35,7 @@ def calculate_receipt_totals(receipt_id: int, db: Session):
             user_totals[user.id] = {
                 "user_id": user.id,
                 "user_name": user.name,
+                "upi_id": user.upi_id,
                 "total_owed": 0.0,
                 "items": []
             }

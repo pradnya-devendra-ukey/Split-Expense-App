@@ -51,6 +51,7 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
         name=new_user.name,
         username=new_user.username,
         email=new_user.email,
+        upi_id=new_user.upi_id,
         token=token
     )
 
@@ -82,6 +83,25 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
         name=user.name,
         username=user.username or username,
         email=user.email,
+        upi_id=user.upi_id,
+        token=token
+    )
+
+@router.put("/user/{user_id}/upi", response_model=schemas.UserAuthResponse)
+def update_user_upi(user_id: int, payload: schemas.UserUpiUpdate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.upi_id = payload.upi_id.strip()
+    db.commit()
+    db.refresh(user)
+    token = f"token_{user.id}_{secrets.token_hex(8)}"
+    return schemas.UserAuthResponse(
+        id=user.id,
+        name=user.name,
+        username=user.username or user.name.lower(),
+        email=user.email,
+        upi_id=user.upi_id,
         token=token
     )
 

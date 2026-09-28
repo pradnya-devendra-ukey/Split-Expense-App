@@ -201,7 +201,7 @@
           ₹
         </div>
         <h2 class="text-3xl font-black tracking-tight pt-2" style="color: var(--text-heading);" id="authScreenTitle">Sign In to SplitExpense</h2>
-        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login with your credentials to scan receipts, split costs, and retrieve saved expense history anytime.</p>
+        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login with your credentials to scan receipts, split costs, set UPI ID, and retrieve saved expense history.</p>
       </div>
 
       <!-- Auth Card -->
@@ -256,10 +256,10 @@
           <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-purple-900/90 via-purple-950/90 to-indigo-950 border border-purple-500/30 shadow-2xl text-white">
             <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-purple-500/25 rounded-full blur-2xl pointer-events-none"></div>
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-800/40 border border-purple-400/30 text-purple-200 text-[11px] font-bold uppercase tracking-wider mb-2">
-              ⚡ Instant AI Receipt Splitter
+              ⚡ Instant AI Receipt Splitter & UPI Payments
             </div>
             <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2 text-white">Split Bills With Ease</h1>
-            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan any receipt with Gemini AI, customize exact portions (/2, /3, /4, Full), and retrieve history in memory anytime.</p>
+            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan any receipt with Gemini AI, customize exact portions (/2, /3, /4, Full), and collect UPI payments seamlessly.</p>
           </div>
 
           <!-- Action Cards Grid -->
@@ -414,7 +414,10 @@
 
           <div class="border-t pt-6 space-y-3" style="border-color: var(--border-sub);">
             <div class="flex items-center justify-between">
-              <h3 class="font-bold text-base" style="color: var(--text-heading);">Live Who-Owes-What</h3>
+              <div>
+                <h3 class="font-bold text-base" style="color: var(--text-heading);">Live Who-Owes-What & UPI</h3>
+                <p class="text-[11px]" style="color: var(--text-sub);">Track payments or pay host directly via UPI</p>
+              </div>
               <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold flex items-center gap-1 border px-3 py-1.5 rounded-xl transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Refresh
@@ -492,9 +495,9 @@
         </div>
       </div>
 
-      <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
+      <!-- ================= TAB 3: PROFILE / ACCOUNT & UPI SETTINGS ================= -->
       <div id="tab-profile" class="hidden space-y-5 animate-fade pb-16">
-        <h2 class="text-2xl font-black" style="color: var(--text-heading);">My Account</h2>
+        <h2 class="text-2xl font-black" style="color: var(--text-heading);">My Account & UPI</h2>
         
         <div class="app-card p-6 sm:p-8 rounded-3xl space-y-6">
           <div class="flex items-center gap-4">
@@ -516,6 +519,51 @@
             <div class="p-4 rounded-2xl border" style="background: var(--bg-chip); border-color: var(--border-main);">
               <p class="text-[10px] uppercase font-bold" style="color: var(--text-sub);">Total Spent/Owed</p>
               <p id="profileTotalOwedSum" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
+            </div>
+          </div>
+
+          <!-- ================= UPI PAYMENT SETTINGS CARD ================= -->
+          <div class="p-5 rounded-3xl border-2 space-y-4 shadow-lg" style="background: var(--bg-sub); border-color: var(--border-glow);">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                  ₹
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold" style="color: var(--text-heading);">My UPI ID for Payments</h4>
+                  <p class="text-[11px]" style="color: var(--text-sub);">Friends can pay you directly with GPay, PhonePe, Paytm</p>
+                </div>
+              </div>
+              <span id="upiStatusBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-purple-950/60 text-purple-300 border-purple-500/40">
+                Not Set
+              </span>
+            </div>
+
+            <form onsubmit="saveUserUpiId(event)" class="space-y-3">
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Your UPI Address</label>
+                <div class="flex gap-2">
+                  <input type="text" id="profileUpiInput" placeholder="e.g. name@okaxis, 9876543210@paytm, name@ybl" class="flex-1 p-3 theme-input rounded-xl text-xs font-semibold outline-none border" />
+                  <button type="submit" id="saveUpiBtn" class="lavender-glow-btn text-white px-4 py-3 rounded-xl text-xs font-bold shrink-0">
+                    Save UPI
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div id="profileUpiDisplayBox" class="hidden flex items-center justify-between p-3 rounded-xl border" style="background: var(--bg-chip); border-color: var(--border-sub);">
+              <div class="truncate">
+                <p class="text-[10px] uppercase font-bold text-purple-400">Active UPI ID</p>
+                <span class="text-xs font-mono font-bold" style="color: var(--text-heading);" id="currentUpiDisplay">--</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="copyMyUpi()" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                  Copy
+                </button>
+                <button type="button" onclick="showMyUpiQrModal()" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border bg-purple-600 text-white border-purple-500 hover:bg-purple-500 transition shadow-sm">
+                  Show QR
+                </button>
+              </div>
             </div>
           </div>
 
@@ -565,8 +613,44 @@
       </div>
 
       <div>
-        <h4 class="text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--text-sub);">Participant Breakdown</h4>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Participant Breakdown & Payments</h4>
+          <span class="text-[10px] font-bold text-purple-400">1-Tap Settle Up</span>
+        </div>
         <div id="modalSummaryList" class="space-y-2 rounded-2xl p-2 border divide-y" style="background: var(--bg-sub); border-color: var(--border-sub); divide-color: var(--border-sub);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= UPI QR CODE SCANNER MODAL ================= -->
+  <div id="upiQrModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-5 text-center animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <h3 class="text-base font-bold" style="color: var(--text-heading);">Scan & Pay via UPI</h3>
+        <button onclick="closeUpiQrModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs" style="color: var(--text-sub);" id="qrPayeeName">Pay to Host</p>
+        <p class="text-2xl font-black text-emerald-400" id="qrPayAmount">₹0.00</p>
+        
+        <!-- QR Container -->
+        <div class="p-4 bg-white rounded-2xl inline-block shadow-lg mx-auto">
+          <img id="upiQrImage" src="" alt="UPI QR Code" class="w-44 h-44 mx-auto rounded-lg" />
+        </div>
+
+        <div class="p-2.5 rounded-xl border font-mono text-xs font-bold break-all" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-heading);" id="qrUpiIdText">
+          --
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button id="qrDirectPayBtn" onclick="openDirectUpiApp()" class="w-full py-3 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-lg">
+          ⚡ Open in UPI App (GPay/PhonePe/Paytm)
+        </button>
+        <button onclick="copyModalUpi()" class="w-full py-2.5 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+          Copy UPI ID
+        </button>
       </div>
     </div>
   </div>
@@ -607,6 +691,7 @@
     let currentTab = 'split';
     let authMode = 'login';
     let deferredPrompt = null;
+    let currentQrUpiLink = '';
 
     // --- PWA INSTALL CAPTURE ---
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -641,7 +726,6 @@
       const metaColor = document.getElementById('metaThemeColor');
       if (metaColor) metaColor.setAttribute('content', theme === 'dark' ? '#09070F' : '#F6F4FC');
 
-      // Re-render any visible item cards so active states match theme
       if (currentReceiptItems && currentReceiptItems.length > 0) {
         currentReceiptItems.forEach(i => renderItemCardUI(i.id));
       }
@@ -697,6 +781,9 @@
         document.getElementById('profileUsernameText').innerText = `@${currentUser.username || 'user'}`;
         if (uploaderInput) uploaderInput.value = currentUser.name;
 
+        // Render UPI profile information
+        renderProfileUpiState();
+
         if (receiptParam) {
           loadReceiptForJoining(parseInt(receiptParam));
         }
@@ -706,6 +793,111 @@
         appNav.classList.add('hidden');
         chip.classList.add('hidden');
         logoutBtn.classList.add('hidden');
+      }
+    }
+
+    function renderProfileUpiState() {
+      const upiInput = document.getElementById('profileUpiInput');
+      const upiBadge = document.getElementById('upiStatusBadge');
+      const displayBox = document.getElementById('profileUpiDisplayBox');
+      const displayText = document.getElementById('currentUpiDisplay');
+
+      if (currentUser && currentUser.upi_id) {
+        if (upiInput) upiInput.value = currentUser.upi_id;
+        if (upiBadge) {
+          upiBadge.innerText = 'Active ✅';
+          upiBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+        }
+        if (displayBox) displayBox.classList.remove('hidden');
+        if (displayText) displayText.innerText = currentUser.upi_id;
+      } else {
+        if (upiInput) upiInput.value = '';
+        if (upiBadge) {
+          upiBadge.innerText = 'Not Set ⚠️';
+          upiBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-amber-950/60 text-amber-300 border-amber-500/40';
+        }
+        if (displayBox) displayBox.classList.add('hidden');
+      }
+    }
+
+    async function saveUserUpiId(e) {
+      e.preventDefault();
+      const upiVal = document.getElementById('profileUpiInput').value.trim();
+      if (!upiVal) return showToast('Please enter a valid UPI ID (e.g. name@okaxis)', 'error');
+      if (!currentUser) return showToast('Please log in first', 'error');
+
+      const btn = document.getElementById('saveUpiBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/user/${currentUser.id}/upi`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ upi_id: upiVal })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not update UPI ID');
+
+        currentUser.upi_id = upiVal;
+        localStorage.setItem('split_user', JSON.stringify(currentUser));
+        renderProfileUpiState();
+        showToast('UPI ID saved successfully! Friends can now pay you.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save UPI';
+      }
+    }
+
+    function copyMyUpi() {
+      if (currentUser && currentUser.upi_id) {
+        navigator.clipboard.writeText(currentUser.upi_id);
+        showToast('UPI ID copied to clipboard!');
+      }
+    }
+
+    function showMyUpiQrModal() {
+      if (!currentUser || !currentUser.upi_id) return showToast('Set your UPI ID first', 'error');
+      openUpiQrModal(currentUser.upi_id, currentUser.name, 0);
+    }
+
+    function openUpiQrModal(upiId, payeeName, amount = 0) {
+      const modal = document.getElementById('upiQrModal');
+      const qrImg = document.getElementById('upiQrImage');
+      const payeeEl = document.getElementById('qrPayeeName');
+      const amtEl = document.getElementById('qrPayAmount');
+      const upiText = document.getElementById('qrUpiIdText');
+      
+      payeeEl.innerText = `Pay to: ${payeeName}`;
+      amtEl.innerText = amount > 0 ? `₹${amount.toFixed(2)}` : 'Custom Amount';
+      upiText.innerText = upiId;
+
+      const upiUri = amount > 0 
+        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('SplitExpense Bill')}&cu=INR`
+        : `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+
+      currentQrUpiLink = upiUri;
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+      modal.classList.remove('hidden');
+    }
+
+    function closeUpiQrModal() {
+      document.getElementById('upiQrModal').classList.add('hidden');
+    }
+
+    function openDirectUpiApp() {
+      if (currentQrUpiLink) {
+        window.location.href = currentQrUpiLink;
+      }
+    }
+
+    function copyModalUpi() {
+      const upiText = document.getElementById('qrUpiIdText').innerText;
+      if (upiText) {
+        navigator.clipboard.writeText(upiText);
+        showToast('UPI ID copied!');
       }
     }
 
@@ -902,6 +1094,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error('Receipt code not found');
 
+        activeReceiptData = data;
         document.getElementById('splitHomeSec').classList.add('hidden');
         document.getElementById('uploadSection').classList.add('hidden');
         renderItemsSelection(data);
@@ -1137,13 +1330,39 @@
       }
     }
 
-    // --- SUMMARY RENDERING ---
+    // --- PAYMENT STATUS TRACKER IN LOCALSTORAGE ---
+    function getPaymentStatus(receiptId, userId) {
+      const store = JSON.parse(localStorage.getItem(`settled_receipt_${receiptId}`) || '{}');
+      return !!store[userId];
+    }
+
+    function togglePaymentStatus(receiptId, userId) {
+      const key = `settled_receipt_${receiptId}`;
+      const store = JSON.parse(localStorage.getItem(key) || '{}');
+      store[userId] = !store[userId];
+      localStorage.setItem(key, JSON.stringify(store));
+      fetchSummary(receiptId, 'liveSummaryList');
+      if (!document.getElementById('receiptModal').classList.contains('hidden')) {
+        fetchSummary(receiptId, 'modalSummaryList');
+      }
+      showToast(store[userId] ? 'Marked as Paid! ✅' : 'Payment status marked as Pending ⏳');
+    }
+
+    // --- SUMMARY RENDERING WITH 1-TAP UPI PAYMENT ---
     async function fetchSummary(receiptId, targetListId) {
       if (!receiptId) return;
       try {
-        const res = await fetch(`${API_BASE}/split/summary/${receiptId}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail);
+        // Fetch both receipt details (for host UPI) and split summary
+        const [sumRes, recRes] = await Promise.all([
+          fetch(`${API_BASE}/split/summary/${receiptId}`),
+          fetch(`${API_BASE}/receipts/${receiptId}`)
+        ]);
+
+        const data = await sumRes.json();
+        const receiptData = await recRes.json();
+        if (!sumRes.ok) throw new Error(data.detail);
+
+        activeReceiptData = receiptData;
 
         const list = document.getElementById(targetListId);
         if (!list) return;
@@ -1154,10 +1373,16 @@
           return;
         }
 
+        const hostUpi = receiptData.uploader_upi_id || (currentUser && currentUser.id === receiptData.uploader_id ? currentUser.upi_id : null);
+        const hostName = receiptData.uploader_name || 'Host';
+
         data.forEach(row => {
           const div = document.createElement('div');
-          div.className = 'p-3.5 flex flex-col gap-1';
+          div.className = 'p-3.5 flex flex-col gap-2';
           
+          const isPaid = getPaymentStatus(receiptId, row.user_id);
+          const isHost = (receiptData.uploader_id && row.user_id === receiptData.uploader_id);
+
           let itemsHtml = (row.items && row.items.length > 0)
             ? row.items.map(i => `
                 <div class="flex justify-between text-xs" style="color: var(--text-sub);">
@@ -1167,25 +1392,71 @@
               `).join('')
             : '<div class="text-xs" style="color: var(--text-dim);">No items selected</div>';
 
+          // UPI & Settlement Action Bar for each participant
+          let paymentActionHtml = '';
+          if (row.total_owed > 0) {
+            const statusBadge = isPaid 
+              ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅</button>`
+              : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
+
+            let upiButtons = '';
+            if (hostUpi) {
+              upiButtons = `
+                <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1">
+                  ⚡ Pay ₹${row.total_owed.toFixed(2)} (UPI)
+                </button>
+              `;
+            } else {
+              upiButtons = `
+                <button onclick="promptHostUpi()" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-purple-300 border-purple-500/30" style="background: var(--bg-chip);">
+                  Set Host UPI
+                </button>
+              `;
+            }
+
+            paymentActionHtml = `
+              <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
+                <div class="flex items-center gap-1.5">
+                  ${statusBadge}
+                  ${isHost ? '<span class="text-[10px] font-bold text-purple-400 bg-purple-950/60 border border-purple-500/30 px-1.5 py-0.5 rounded">Host/Paid</span>' : ''}
+                </div>
+                <div class="flex items-center gap-1.5">
+                  ${upiButtons}
+                </div>
+              </div>
+            `;
+          }
+
           div.innerHTML = `
             <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md">
                   ${(row.user_name || 'U')[0].toUpperCase()}
                 </div>
-                <span class="font-bold text-sm" style="color: var(--text-heading);">${row.user_name}</span>
+                <div>
+                  <span class="font-bold text-sm" style="color: var(--text-heading);">${row.user_name}</span>
+                  ${row.upi_id ? `<p class="text-[10px] font-mono text-purple-400">${row.upi_id}</p>` : ''}
+                </div>
               </div>
-              <span class="font-black text-base text-purple-600 dark:text-purple-300">₹${row.total_owed.toFixed(2)}</span>
+              <div class="text-right">
+                <span class="font-black text-base ${isPaid ? 'text-emerald-400' : 'text-purple-600 dark:text-purple-300'}">₹${row.total_owed.toFixed(2)}</span>
+              </div>
             </div>
-            <div class="hidden pt-2.5 pl-10 space-y-1.5">
+            <div class="hidden pt-1 pl-10 space-y-1.5">
               ${itemsHtml}
             </div>
+            ${paymentActionHtml}
           `;
           list.appendChild(div);
         });
       } catch (err) {
         showToast(err.message, 'error');
       }
+    }
+
+    function promptHostUpi() {
+      switchTab('profile');
+      showToast('Set your UPI ID in Profile so group members can pay you in 1 tap!');
     }
 
     // --- EXPENSE HISTORY & RETRIEVAL ---
@@ -1255,7 +1526,7 @@
 
             <div class="flex items-center justify-between pt-2 border-t text-xs font-medium" style="border-color: var(--border-sub); color: var(--text-sub);">
               <span>Receipt Code: <b style="color: var(--text-heading);">#${item.id}</b> • Bill: ₹${item.total_amount.toFixed(2)}</span>
-              <span class="font-bold flex items-center gap-1 text-purple-600 dark:text-purple-300">View Breakdown →</span>
+              <span class="font-bold flex items-center gap-1 text-purple-600 dark:text-purple-300">View Breakdown & UPI →</span>
             </div>
           `;
           container.appendChild(card);
@@ -1278,7 +1549,7 @@
         if (!res.ok) throw new Error('Receipt not found');
 
         document.getElementById('modalStoreTitle').innerText = `${data.store_name || 'Store Receipt'} (#${data.id})`;
-        document.getElementById('modalDateSubtitle').innerText = 'Stored in memory';
+        document.getElementById('modalDateSubtitle').innerText = data.uploader_name ? `Hosted by ${data.uploader_name}` : 'Stored in memory';
         document.getElementById('modalGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
 
         fetchSummary(receiptId, 'modalSummaryList');

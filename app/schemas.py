@@ -7,8 +7,12 @@ class UserCreate(BaseModel):
 
 class UserResponse(UserCreate):
     id: int
+    upi_id: Optional[str] = None
     class Config:
         from_attributes = True
+
+class UserUpiUpdate(BaseModel):
+    upi_id: str
 
 class ItemResponse(BaseModel):
     id: int
@@ -21,6 +25,9 @@ class ReceiptResponse(BaseModel):
     id: int
     store_name: Optional[str]
     total_amount: float
+    uploader_id: Optional[int] = None
+    uploader_name: Optional[str] = None
+    uploader_upi_id: Optional[str] = None
     items: List[ItemResponse]
     class Config:
         from_attributes = True
@@ -42,6 +49,7 @@ class ItemBreakdown(BaseModel):
 class UserTotalOwed(BaseModel):
     user_id: int
     user_name: str
+    upi_id: Optional[str] = None
     total_owed: float
     items: List[ItemBreakdown] = []
 
@@ -82,6 +90,7 @@ class UserAuthResponse(BaseModel):
     name: str
     username: Optional[str] = None
     email: Optional[str] = None
+    upi_id: Optional[str] = None
     token: str
 
 class ReceiptHistoryItem(BaseModel):

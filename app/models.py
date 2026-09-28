@@ -10,6 +10,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=True)
     username = Column(String(100), unique=True, nullable=True, index=True)
     password_hash = Column(String(255), nullable=True)
+    upi_id = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Receipt(Base):

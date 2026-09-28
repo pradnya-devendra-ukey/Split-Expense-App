@@ -51,7 +51,16 @@ def get_receipt(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    return receipt
+    uploader = db.query(models.User).filter(models.User.id == receipt.uploader_id).first()
+    return schemas.ReceiptResponse(
+        id=receipt.id,
+        store_name=receipt.store_name,
+        total_amount=float(receipt.total_amount),
+        uploader_id=receipt.uploader_id,
+        uploader_name=uploader.name if uploader else "Unknown",
+        uploader_upi_id=uploader.upi_id if uploader else None,
+        items=[schemas.ItemResponse.model_validate(item) for item in receipt.items]
+    )
 
 @router.get("/history/user/{user_id}", response_model=list[schemas.ReceiptHistoryItem])
 def get_user_receipt_history(user_id: int, db: Session = Depends(get_db)):

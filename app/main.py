@@ -19,6 +19,8 @@ def migrate_db_columns():
                 conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(100)"))
             if "password_hash" not in cols:
                 conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+            if "upi_id" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN upi_id VARCHAR(100)"))
             if "created_at" not in cols:
                 conn.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
             conn.commit()
