@@ -18,7 +18,7 @@
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .animate-fade { animation: fadeIn 0.25s ease-out forwards; }
-    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 72px); }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 76px); }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen selection:bg-indigo-100 selection:text-indigo-900">
@@ -36,269 +36,314 @@
         </div>
       </div>
 
-      <!-- User Chip / Auth Button -->
+      <!-- User Info / Logout -->
       <div id="headerUserSec" class="flex items-center gap-2">
-        <button id="headerLoginBtn" onclick="openAuthModal('login')" class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3.5 py-2 rounded-xl hover:bg-indigo-100 transition">
-          Login / Sign Up
-        </button>
         <div id="headerProfileChip" class="hidden flex items-center gap-2 bg-slate-100 pl-2 pr-3 py-1 rounded-full cursor-pointer hover:bg-slate-200 transition" onclick="switchTab('profile')">
           <div class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs" id="headerAvatar">
             U
           </div>
           <span id="headerUserName" class="text-xs font-bold text-slate-700 max-w-[90px] truncate">User</span>
         </div>
+        <button id="headerLogoutBtn" onclick="logoutUser()" class="hidden text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1.5 rounded-lg hover:bg-red-100 transition">
+          Logout
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT CONTAINER -->
+  <!-- MAIN CONTAINER -->
   <main class="max-w-2xl mx-auto p-4 sm:p-6 pb-safe">
-    
-    <!-- ================= TAB 1: SPLIT (HOME) ================= -->
-    <div id="tab-split" class="space-y-6 animate-fade">
-      
-      <!-- Mode Selection (Start Split or Join) -->
-      <div id="splitHomeSec" class="space-y-5">
-        
-        <!-- Welcome Hero Card -->
-        <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
-          <div class="absolute -right-6 -bottom-6 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-          <p class="text-xs font-bold tracking-wider uppercase text-indigo-200 mb-1">Instant Bill Splitter</p>
-          <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2">Split any receipt in seconds</h1>
-          <p class="text-indigo-100 text-sm font-medium">Scan bill with Gemini AI, customize item shares (/2, /3, /4, Full), and settle instantly.</p>
+
+    <!-- ================= 1. PRIMARY LOGIN / SIGN UP SCREEN (FIRST SCREEN) ================= -->
+    <div id="authScreen" class="space-y-6 animate-fade pt-4 sm:pt-8">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-violet-600 text-white flex items-center justify-center font-black text-3xl mx-auto shadow-xl shadow-indigo-200">
+          ₹
+        </div>
+        <h2 class="text-3xl font-black text-slate-900 tracking-tight" id="authScreenTitle">Sign In to SplitExpense</h2>
+        <p class="text-xs text-slate-500 max-w-xs mx-auto">Login with your username and password to split bills and retrieve your stored expense history.</p>
+      </div>
+
+      <!-- Auth Box -->
+      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-100/60 space-y-5">
+        <!-- Toggle Tabs -->
+        <div class="flex bg-slate-100 p-1 rounded-2xl">
+          <button id="tabBtnLogin" type="button" onclick="setAuthMode('login')" class="flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow-sm">
+            Log In
+          </button>
+          <button id="tabBtnRegister" type="button" onclick="setAuthMode('register')" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800">
+            Sign Up
+          </button>
         </div>
 
-        <!-- Action Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Host Card -->
-          <div onclick="startHostFlow()" class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group flex flex-col justify-between">
-            <div class="space-y-3">
-              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-              </div>
-              <h2 class="text-lg font-bold text-slate-900">Upload Receipt</h2>
-              <p class="text-xs text-slate-500 font-medium">Scan receipt with AI and get a 4-digit code for your group.</p>
-            </div>
-            <button class="mt-4 w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold group-hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
-              Start New Split
-            </button>
+        <form id="authScreenForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+          <div id="authNameField" class="hidden">
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Full Name</label>
+            <input type="text" id="authNameInput" placeholder="e.g. Alex Smith" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
 
-          <!-- Join Card -->
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
-            <div class="space-y-3">
-              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Username</label>
+            <input type="text" id="authUsernameInput" required placeholder="e.g. alex22" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Password</label>
+            <input type="password" id="authPasswordInput" required placeholder="••••••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <button type="submit" id="authSubmitBtn" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-200">
+            Log In
+          </button>
+        </form>
+
+        <div class="pt-2 border-t border-slate-100 text-center">
+          <button type="button" onclick="continueAsGuest()" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition">
+            Continue as Guest (Quick Access) →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2. MAIN APP DASHBOARD (ACCESSED AFTER LOGIN) ================= -->
+    <div id="appDashboard" class="hidden space-y-6">
+
+      <!-- ================= TAB 1: SPLIT ================= -->
+      <div id="tab-split" class="space-y-6 animate-fade">
+        
+        <!-- Welcome Hero Card -->
+        <div id="splitHomeSec" class="space-y-5">
+          <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <p class="text-xs font-bold tracking-wider uppercase text-indigo-200 mb-1">Instant Bill Splitter</p>
+            <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2">Split any receipt in seconds</h1>
+            <p class="text-indigo-100 text-sm font-medium">Scan bill with Gemini AI, select exact item shares (/2, /3, /4, Full), and retrieve history anytime.</p>
+          </div>
+
+          <!-- Action Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Host Card -->
+            <div onclick="startHostFlow()" class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </div>
+                <h2 class="text-lg font-bold text-slate-900">Upload Receipt</h2>
+                <p class="text-xs text-slate-500 font-medium">Scan receipt with AI and get a 4-digit code for your group.</p>
               </div>
-              <h2 class="text-lg font-bold text-slate-900">Join a Split</h2>
-              <p class="text-xs text-slate-500 font-medium">Enter the receipt code from your friend to select your items.</p>
+              <button class="mt-4 w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold group-hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
+                Start New Split
+              </button>
             </div>
-            <div class="flex gap-2 mt-2">
-              <input type="number" id="joinReceiptCodeInput" placeholder="Code (e.g. 18)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-              <button onclick="joinByCode()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
-                Join
+
+            <!-- Join Card -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+              <div class="space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <h2 class="text-lg font-bold text-slate-900">Join a Split</h2>
+                <p class="text-xs text-slate-500 font-medium">Enter the receipt code from your friend to select your items.</p>
+              </div>
+              <div class="flex gap-2 mt-2">
+                <input type="number" id="joinReceiptCodeInput" placeholder="Code (e.g. 18)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+                <button onclick="joinByCode()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+                  Join
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Share App Bar -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-left w-full sm:w-auto">
+              <p class="text-xs font-bold text-slate-800">Share App with Friends</p>
+              <p class="text-xs text-slate-400">They can open it on their phones to join.</p>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button onclick="shareAppUrl()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Share Link
+              </button>
+              <button onclick="copyAppUrl()" class="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition" title="Copy App Link">
+                Copy
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Share App Bar -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="text-left w-full sm:w-auto">
-            <p class="text-xs font-bold text-slate-800">Share App with Friends</p>
-            <p class="text-xs text-slate-400">They can open it on their phones to join.</p>
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button onclick="shareAppUrl()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-              Share Link
-            </button>
-            <button onclick="copyAppUrl()" class="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition" title="Copy App Link">
-              Copy
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ================= UPLOAD SECTION ================= -->
-      <section id="uploadSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">Upload Receipt</h2>
-            <p class="text-xs text-slate-400">Take a photo or upload an image of the bill.</p>
-          </div>
-          <button onclick="cancelUpload()" class="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">Cancel</button>
-        </div>
-
-        <form id="uploadForm" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Who paid the bill?</label>
-            <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+        <!-- ================= UPLOAD SECTION ================= -->
+        <section id="uploadSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Upload Receipt</h2>
+              <p class="text-xs text-slate-400">Take a photo or upload an image of the bill.</p>
+            </div>
+            <button onclick="cancelUpload()" class="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">Cancel</button>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Receipt Image</label>
-            <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-indigo-400 transition bg-slate-50/50 cursor-pointer" onclick="document.getElementById('receiptImageInput').click()">
-              <input type="file" id="receiptImageInput" accept="image/*" required class="hidden" onchange="previewSelectedImage(this)" />
-              <div id="uploadPlaceholder" class="space-y-2">
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <form id="uploadForm" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Who paid the bill?</label>
+              <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Receipt Image</label>
+              <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-indigo-400 transition bg-slate-50/50 cursor-pointer" onclick="document.getElementById('receiptImageInput').click()">
+                <input type="file" id="receiptImageInput" accept="image/*" required class="hidden" onchange="previewSelectedImage(this)" />
+                <div id="uploadPlaceholder" class="space-y-2">
+                  <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  </div>
+                  <p class="text-sm font-bold text-slate-700">Tap to take photo or choose file</p>
+                  <p class="text-xs text-slate-400">JPG, PNG, WebP supported</p>
                 </div>
-                <p class="text-sm font-bold text-slate-700">Tap to take photo or choose file</p>
-                <p class="text-xs text-slate-400">JPG, PNG, WebP supported</p>
+                <div id="imageSelectedBadge" class="hidden text-sm font-bold text-emerald-600 flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  <span id="selectedFileName">Image Selected</span>
+                </div>
               </div>
-              <div id="imageSelectedBadge" class="hidden text-sm font-bold text-emerald-600 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <span id="selectedFileName">Image Selected</span>
-              </div>
+            </div>
+
+            <button type="submit" id="uploadSubmitBtn" class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white p-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
+              <span id="uploadBtnText">Extract with Gemini AI</span>
+              <svg id="uploadSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+          </form>
+        </section>
+
+        <!-- ================= SHARE CODE & SUMMARY SCREEN ================= -->
+        <section id="hostShareSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+          <div class="text-center space-y-3">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Receipt Active
+            </div>
+            <h2 class="text-2xl font-black text-slate-900">Receipt Ready to Split!</h2>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">Share this code with your group or send them the direct link:</p>
+            
+            <div class="bg-slate-900 text-white rounded-2xl py-5 px-8 inline-block shadow-lg">
+              <p class="text-xs uppercase font-bold text-slate-400 tracking-widest mb-1">Receipt Code</p>
+              <span id="displayReceiptCode" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-emerald-400"></span>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 pt-2 max-w-md mx-auto">
+              <button onclick="shareDirectReceiptLink()" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Share via WhatsApp / App
+              </button>
+              <button onclick="copyDirectReceiptLink()" class="bg-slate-100 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-200 transition">
+                Copy Link
+              </button>
             </div>
           </div>
 
-          <button type="submit" id="uploadSubmitBtn" class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white p-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
-            <span id="uploadBtnText">Extract with Gemini AI</span>
-            <svg id="uploadSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          </button>
-        </form>
-      </section>
-
-      <!-- ================= SHARE CODE & SUMMARY SCREEN ================= -->
-      <section id="hostShareSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
-        <div class="text-center space-y-3">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Receipt Active
-          </div>
-          <h2 class="text-2xl font-black text-slate-900">Receipt Ready to Split!</h2>
-          <p class="text-xs text-slate-500 max-w-sm mx-auto">Share this 4-digit code with your group or send them the direct link:</p>
-          
-          <!-- Big Code Box -->
-          <div class="bg-slate-900 text-white rounded-2xl py-5 px-8 inline-block shadow-lg">
-            <p class="text-xs uppercase font-bold text-slate-400 tracking-widest mb-1">Receipt Code</p>
-            <span id="displayReceiptCode" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-emerald-400"></span>
-          </div>
-
-          <!-- Share Link Box -->
-          <div class="flex items-center justify-center gap-2 pt-2 max-w-md mx-auto">
-            <button onclick="shareDirectReceiptLink()" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-indigo-700 transition shadow-md shadow-indigo-100">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-              Share via WhatsApp / App
-            </button>
-            <button onclick="copyDirectReceiptLink()" class="bg-slate-100 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-200 transition">
-              Copy Link
-            </button>
-          </div>
-        </div>
-
-        <!-- Live Summary List -->
-        <div class="border-t border-slate-100 pt-6 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-base">Live Who-Owes-What</h3>
-            <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-lg">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              Refresh
-            </button>
-          </div>
-          <div id="liveSummaryList" class="bg-slate-50 rounded-2xl p-2 border border-slate-100 divide-y divide-slate-100"></div>
-        </div>
-      </section>
-
-      <!-- ================= ITEM SELECTION (GUEST & HOST SHARE ASSIGNMENT) ================= -->
-      <section id="itemsSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-100 pb-4 gap-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black text-slate-900">Store Receipt</h2>
-              <span id="receiptCodeBadge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-md">#0</span>
+          <div class="border-t border-slate-100 pt-6 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-base">Live Who-Owes-What</h3>
+              <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-lg">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+              </button>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">Select your portion (/2, /3, /4, Full) for each product.</p>
+            <div id="liveSummaryList" class="bg-slate-50 rounded-2xl p-2 border border-slate-100 divide-y divide-slate-100"></div>
           </div>
-          <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-left sm:text-right">
-            <p class="text-[10px] uppercase font-bold text-slate-400">Total Bill</p>
-            <p id="receiptGrandTotal" class="text-xl font-black text-slate-900">₹0.00</p>
-          </div>
-        </div>
+        </section>
 
-        <!-- Estimate Banner -->
-        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
+        <!-- ================= ITEM SELECTION (GUEST & HOST SHARE ASSIGNMENT) ================= -->
+        <section id="itemsSection" class="hidden bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6 animate-fade">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-100 pb-4 gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black text-slate-900">Store Receipt</h2>
+                <span id="receiptCodeBadge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-md">#0</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Select your portion (/2, /3, /4, Full) for each product.</p>
+            </div>
+            <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-left sm:text-right">
+              <p class="text-[10px] uppercase font-bold text-slate-400">Total Bill</p>
+              <p id="receiptGrandTotal" class="text-xl font-black text-slate-900">₹0.00</p>
+            </div>
+          </div>
+
+          <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Your Share Total</p>
+              <p id="personalEstimatedTotal" class="text-2xl font-black text-indigo-900">₹0.00</p>
+            </div>
+            <div class="text-xs font-bold text-indigo-700 bg-white px-3 py-1.5 rounded-xl border border-indigo-100 shadow-sm">
+              <span id="personalSelectedCount">0</span> items picked
+            </div>
+          </div>
+
+          <div id="itemsCardsContainer" class="space-y-3"></div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+            <button onclick="cancelItemSelection()" class="text-xs font-bold text-slate-400 hover:text-slate-600">Back</button>
+            <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
+              <span>Save My Shares</span>
+              <span id="saveSharesBtnBadge" class="bg-indigo-700 text-xs px-2.5 py-1 rounded-md">₹0.00</span>
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================= TAB 2: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
+      <div id="tab-history" class="hidden space-y-5 animate-fade">
+        <div class="flex items-center justify-between">
           <div>
-            <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Your Share Total</p>
-            <p id="personalEstimatedTotal" class="text-2xl font-black text-indigo-900">₹0.00</p>
+            <h2 class="text-2xl font-black text-slate-900">Expense History</h2>
+            <p class="text-xs text-slate-500">All receipts stored in your account memory.</p>
           </div>
-          <div class="text-xs font-bold text-indigo-700 bg-white px-3 py-1.5 rounded-xl border border-indigo-100 shadow-sm">
-            <span id="personalSelectedCount">0</span> items picked
-          </div>
-        </div>
-
-        <!-- Items Container -->
-        <div id="itemsCardsContainer" class="space-y-3"></div>
-
-        <!-- Submit Button -->
-        <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-          <button onclick="cancelItemSelection()" class="text-xs font-bold text-slate-400 hover:text-slate-600">Back</button>
-          <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
-            <span>Save My Shares</span>
-            <span id="saveSharesBtnBadge" class="bg-indigo-700 text-xs px-2.5 py-1 rounded-md">₹0.00</span>
+          <button onclick="loadUserHistory()" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh
           </button>
         </div>
-      </section>
 
-    </div>
-
-    <!-- ================= TAB 2: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
-    <div id="tab-history" class="hidden space-y-5 animate-fade">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-black text-slate-900">Expense History</h2>
-          <p class="text-xs text-slate-500">All receipts you uploaded or participated in.</p>
+        <div id="historyListContainer" class="space-y-3">
+          <div class="p-8 text-center text-slate-400 font-medium bg-white rounded-3xl border border-slate-100">
+            Loading your history...
+          </div>
         </div>
-        <button onclick="loadUserHistory()" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100 transition flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-          Refresh
-        </button>
       </div>
 
-      <!-- History List Container -->
-      <div id="historyListContainer" class="space-y-3">
-        <div class="p-8 text-center text-slate-400 font-medium bg-white rounded-3xl border border-slate-100">
-          Loading your history...
+      <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
+      <div id="tab-profile" class="hidden space-y-5 animate-fade">
+        <h2 class="text-2xl font-black text-slate-900">My Account</h2>
+        
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-2xl shadow-md shadow-indigo-100" id="profileAvatarBig">
+              U
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-slate-900" id="profileNameText">User</h3>
+              <p class="text-xs text-slate-400 font-medium" id="profileUsernameText">@username</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <p class="text-[10px] uppercase font-bold text-slate-400">Total Splits</p>
+              <p id="profileTotalSplitsCount" class="text-xl font-black text-slate-900">0</p>
+            </div>
+            <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+              <p class="text-[10px] uppercase font-bold text-indigo-500">Total Spent/Owed</p>
+              <p id="profileTotalOwedSum" class="text-xl font-black text-indigo-900">₹0.00</p>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100">
+            <button onclick="logoutUser()" class="w-full py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition">
+              Log Out
+            </button>
+          </div>
         </div>
       </div>
+
     </div>
-
-    <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
-    <div id="tab-profile" class="hidden space-y-5 animate-fade">
-      <h2 class="text-2xl font-black text-slate-900">My Account</h2>
-      
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-2xl shadow-md shadow-indigo-100" id="profileAvatarBig">
-            U
-          </div>
-          <div>
-            <h3 class="text-xl font-bold text-slate-900" id="profileNameText">User</h3>
-            <p class="text-xs text-slate-400 font-medium" id="profileUsernameText">@username</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 pt-2">
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-            <p class="text-[10px] uppercase font-bold text-slate-400">Total Splits</p>
-            <p id="profileTotalSplitsCount" class="text-xl font-black text-slate-900">0</p>
-          </div>
-          <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
-            <p class="text-[10px] uppercase font-bold text-indigo-500">Total Spent/Owed</p>
-            <p id="profileTotalOwedSum" class="text-xl font-black text-indigo-900">₹0.00</p>
-          </div>
-        </div>
-
-        <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
-          <button onclick="logoutUser()" class="w-full py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition">
-            Log Out
-          </button>
-        </div>
-      </div>
-    </div>
-
   </main>
 
   <!-- ================= RECEIPT RETRIEVAL MODAL ================= -->
@@ -322,7 +367,6 @@
         </button>
       </div>
 
-      <!-- Who owes what list -->
       <div>
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Participant Breakdown</h4>
         <div id="modalSummaryList" class="space-y-2 bg-slate-50 rounded-2xl p-2 border border-slate-100 divide-y divide-slate-100"></div>
@@ -330,56 +374,8 @@
     </div>
   </div>
 
-  <!-- ================= AUTH MODAL (LOGIN / SIGN UP) ================= -->
-  <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-3xl p-6 sm:p-8 space-y-6 animate-fade shadow-2xl">
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-md shadow-indigo-100">
-          ₹
-        </div>
-        <h3 class="text-2xl font-black text-slate-900 pt-2" id="authModalTitle">Welcome Back</h3>
-        <p class="text-xs text-slate-400">Manage and retrieve all your split expenses.</p>
-      </div>
-
-      <!-- Tabs (Login / Sign Up) -->
-      <div class="flex bg-slate-100 p-1 rounded-xl">
-        <button id="authTabLogin" onclick="setAuthMode('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm">
-          Login
-        </button>
-        <button id="authTabRegister" onclick="setAuthMode('register')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800">
-          Sign Up
-        </button>
-      </div>
-
-      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-3.5">
-        <div id="authNameField" class="hidden">
-          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Your Full Name</label>
-          <input type="text" id="authNameInput" placeholder="e.g. Alex Smith" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Username</label>
-          <input type="text" id="authUsernameInput" required placeholder="e.g. alex22" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Password</label>
-          <input type="password" id="authPasswordInput" required placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-
-        <button type="submit" id="authSubmitBtn" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition active:scale-[0.99] shadow-lg shadow-indigo-100">
-          Log In
-        </button>
-      </form>
-
-      <button onclick="closeAuthModal()" class="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600">
-        Continue as Guest
-      </button>
-    </div>
-  </div>
-
   <!-- ================= BOTTOM NAVIGATION BAR ================= -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-6 py-2 shadow-lg">
+  <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-6 py-2 shadow-lg">
     <div class="max-w-md mx-auto flex items-center justify-around">
       <button onclick="switchTab('split')" id="navBtn-split" class="flex flex-col items-center gap-1 text-indigo-600 py-1 transition">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
@@ -425,29 +421,119 @@
 
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
-      updateUserUI();
-      if (receiptParam) {
+      checkAuthState();
+      if (receiptParam && currentUser) {
         loadReceiptForJoining(parseInt(receiptParam));
       }
     });
 
-    function updateUserUI() {
-      const loginBtn = document.getElementById('headerLoginBtn');
+    function checkAuthState() {
+      const authScreen = document.getElementById('authScreen');
+      const appDashboard = document.getElementById('appDashboard');
+      const appNav = document.getElementById('appNav');
       const chip = document.getElementById('headerProfileChip');
+      const logoutBtn = document.getElementById('headerLogoutBtn');
       const uploaderInput = document.getElementById('hostUploaderName');
 
       if (currentUser) {
-        loginBtn.classList.add('hidden');
+        authScreen.classList.add('hidden');
+        appDashboard.classList.remove('hidden');
+        appNav.classList.remove('hidden');
         chip.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+
         document.getElementById('headerAvatar').innerText = (currentUser.name || 'U')[0].toUpperCase();
         document.getElementById('headerUserName').innerText = currentUser.name;
         document.getElementById('profileAvatarBig').innerText = (currentUser.name || 'U')[0].toUpperCase();
         document.getElementById('profileNameText').innerText = currentUser.name;
         document.getElementById('profileUsernameText').innerText = `@${currentUser.username || 'user'}`;
         if (uploaderInput) uploaderInput.value = currentUser.name;
+
+        if (receiptParam) {
+          loadReceiptForJoining(parseInt(receiptParam));
+        }
       } else {
-        loginBtn.classList.remove('hidden');
+        authScreen.classList.remove('hidden');
+        appDashboard.classList.add('hidden');
+        appNav.classList.add('hidden');
         chip.classList.add('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+    }
+
+    function continueAsGuest() {
+      const guestName = prompt('Enter your display name:', 'Guest');
+      if (!guestName) return;
+      currentUser = { id: 9999, name: guestName, username: 'guest' };
+      localStorage.setItem('split_user', JSON.stringify(currentUser));
+      checkAuthState();
+      showToast(`Welcome, ${guestName}!`);
+    }
+
+    // --- AUTH TOGGLE ---
+    function setAuthMode(mode) {
+      authMode = mode;
+      const tabLogin = document.getElementById('tabBtnLogin');
+      const tabReg = document.getElementById('tabBtnRegister');
+      const nameField = document.getElementById('authNameField');
+      const title = document.getElementById('authScreenTitle');
+      const submitBtn = document.getElementById('authSubmitBtn');
+
+      if (mode === 'login') {
+        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow-sm';
+        tabReg.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800';
+        nameField.classList.add('hidden');
+        title.innerText = 'Sign In to SplitExpense';
+        submitBtn.innerText = 'Log In';
+      } else {
+        tabReg.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow-sm';
+        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800';
+        nameField.classList.remove('hidden');
+        title.innerText = 'Create an Account';
+        submitBtn.innerText = 'Create Account';
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('authUsernameInput').value.trim();
+      const password = document.getElementById('authPasswordInput').value;
+      const name = document.getElementById('authNameInput').value.trim() || username;
+
+      const endpoint = authMode === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
+      const payload = authMode === 'login' ? { username, password } : { name, username, password };
+
+      const btn = document.getElementById('authSubmitBtn');
+      btn.disabled = true;
+      btn.innerText = 'Signing in...';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Authentication failed');
+
+        currentUser = data;
+        localStorage.setItem('split_user', JSON.stringify(data));
+        showToast(`Welcome, ${data.name}!`);
+        checkAuthState();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = authMode === 'login' ? 'Log In' : 'Create Account';
+      }
+    }
+
+    function logoutUser() {
+      if (confirm('Are you sure you want to log out?')) {
+        currentUser = null;
+        localStorage.removeItem('split_user');
+        checkAuthState();
+        showToast('Logged out successfully');
       }
     }
 
@@ -467,100 +553,12 @@
       });
 
       if (tab === 'history') {
-        if (!currentUser) {
-          openAuthModal('login');
-        } else {
-          loadUserHistory();
-        }
-      }
-    }
-
-    // --- AUTH MODAL ---
-    function openAuthModal(mode = 'login') {
-      authMode = mode;
-      setAuthMode(mode);
-      document.getElementById('authModal').classList.remove('hidden');
-    }
-
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.add('hidden');
-    }
-
-    function setAuthMode(mode) {
-      authMode = mode;
-      const tabLogin = document.getElementById('authTabLogin');
-      const tabReg = document.getElementById('authTabRegister');
-      const nameField = document.getElementById('authNameField');
-      const title = document.getElementById('authModalTitle');
-      const submitBtn = document.getElementById('authSubmitBtn');
-
-      if (mode === 'login') {
-        tabLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm';
-        tabReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800';
-        nameField.classList.add('hidden');
-        title.innerText = 'Welcome Back';
-        submitBtn.innerText = 'Log In';
-      } else {
-        tabReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-white text-slate-900 shadow-sm';
-        tabLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition text-slate-500 hover:text-slate-800';
-        nameField.classList.remove('hidden');
-        title.innerText = 'Create Account';
-        submitBtn.innerText = 'Create Account';
-      }
-    }
-
-    async function handleAuthSubmit(e) {
-      e.preventDefault();
-      const username = document.getElementById('authUsernameInput').value.trim();
-      const password = document.getElementById('authPasswordInput').value;
-      const name = document.getElementById('authNameInput').value.trim() || username;
-
-      const endpoint = authMode === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
-      const payload = authMode === 'login' ? { username, password } : { name, username, password };
-
-      const btn = document.getElementById('authSubmitBtn');
-      btn.disabled = true;
-      btn.innerText = 'Please wait...';
-
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Authentication failed');
-
-        currentUser = data;
-        localStorage.setItem('split_user', JSON.stringify(data));
-        showToast(`Welcome, ${data.name}!`);
-        closeAuthModal();
-        updateUserUI();
-        if (currentTab === 'history') loadUserHistory();
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerText = authMode === 'login' ? 'Log In' : 'Create Account';
-      }
-    }
-
-    function logoutUser() {
-      if (confirm('Are you sure you want to log out?')) {
-        currentUser = null;
-        localStorage.removeItem('split_user');
-        updateUserUI();
-        switchTab('split');
-        showToast('Logged out successfully');
+        loadUserHistory();
       }
     }
 
     // --- SPLIT & HOST ACTIONS ---
     function startHostFlow() {
-      if (!currentUser) {
-        openAuthModal('login');
-        return;
-      }
       document.getElementById('splitHomeSec').classList.add('hidden');
       document.getElementById('uploadSection').classList.remove('hidden');
     }
@@ -595,7 +593,7 @@
       btnText.innerText = 'Analyzing with Gemini AI...';
 
       try {
-        let uploaderId = currentUser ? currentUser.id : null;
+        let uploaderId = (currentUser && currentUser.id !== 9999) ? currentUser.id : null;
         if (!uploaderId) {
           const userRes = await fetch(`${API_BASE}/users/bulk`, {
             method: 'POST',
@@ -607,7 +605,7 @@
           uploaderId = userData[0].id;
           currentUser = userData[0];
           localStorage.setItem('split_user', JSON.stringify(userData[0]));
-          updateUserUI();
+          checkAuthState();
         }
 
         const formData = new FormData();
@@ -622,12 +620,10 @@
         activeReceiptId = receipt.id;
         showToast('Receipt scanned successfully!');
 
-        // Display Share Screen
         document.getElementById('uploadSection').classList.add('hidden');
         document.getElementById('hostShareSection').classList.remove('hidden');
         document.getElementById('displayReceiptCode').innerText = activeReceiptId;
 
-        // Render host self-assignment below
         renderItemsSelection(receipt);
         document.getElementById('itemsSection').classList.remove('hidden');
         fetchSummary(activeReceiptId, 'liveSummaryList');
@@ -669,7 +665,7 @@
       document.getElementById('splitHomeSec').classList.remove('hidden');
     }
 
-    // --- ITEM SHARE LOGIC (/2, /3, /4, Full, Custom) ---
+    // --- ITEM SHARE LOGIC ---
     function renderItemsSelection(data) {
       activeReceiptData = data;
       document.getElementById('receiptStoreTitle').innerText = data.store_name || 'Store Receipt';
@@ -705,7 +701,6 @@
             </div>
           </div>
 
-          <!-- Share Selector Pills -->
           <div class="flex flex-wrap gap-1.5 pt-1">
             <button type="button" onclick="setItemShare(${item.id}, 'none')" id="btn-none-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-900 text-white border-slate-900">None</button>
             <button type="button" onclick="setItemShare(${item.id}, 'full')" id="btn-full-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">Full (1/1)</button>
@@ -715,7 +710,6 @@
             <button type="button" onclick="setItemShare(${item.id}, 'custom')" id="btn-custom-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-slate-50 text-slate-700 border-slate-200">/N</button>
           </div>
 
-          <!-- Custom Denominator Stepper -->
           <div id="custom-stepper-${item.id}" class="hidden flex items-center gap-2 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 text-xs">
             <span class="font-bold text-indigo-900">Split among:</span>
             <div class="flex items-center bg-white border border-indigo-200 rounded-lg p-0.5 shadow-sm">
@@ -837,7 +831,7 @@
 
     async function submitPersonalShares() {
       if (!currentUser) {
-        openAuthModal('login');
+        checkAuthState();
         return;
       }
 
@@ -932,7 +926,17 @@
 
     // --- EXPENSE HISTORY & RETRIEVAL ---
     async function loadUserHistory() {
-      if (!currentUser) return;
+      if (!currentUser || currentUser.id === 9999) {
+        document.getElementById('historyListContainer').innerHTML = `
+          <div class="bg-white p-8 rounded-3xl border border-slate-100 text-center space-y-3">
+            <p class="font-bold text-slate-700">Please Log In to Save History</p>
+            <p class="text-xs text-slate-400">Sign in with an account to store and retrieve all your past splits.</p>
+            <button onclick="logoutUser()" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Go to Sign In</button>
+          </div>
+        `;
+        return;
+      }
+
       const container = document.getElementById('historyListContainer');
       container.innerHTML = '<div class="p-8 text-center text-slate-400 font-medium">Fetching your expenses...</div>';
 
