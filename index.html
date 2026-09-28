@@ -36,7 +36,7 @@
     /* THEME VARIABLES */
     [data-theme="dark"] {
       --bg-app: #09070F;
-      --bg-card: rgba(22, 16, 42, 0.85);
+      --bg-card: rgba(22, 16, 42, 0.88);
       --bg-sub: #110B24;
       --bg-chip: #1A1230;
       --bg-input: #130E26;
@@ -47,8 +47,8 @@
       --text-body: #F3E8FF;
       --text-sub: #C4B5FD;
       --text-dim: #7C739D;
-      --header-bg: rgba(14, 10, 29, 0.92);
-      --nav-bg: rgba(14, 10, 29, 0.95);
+      --header-bg: rgba(14, 10, 29, 0.94);
+      --nav-bg: rgba(14, 10, 29, 0.96);
       --blob-opacity: 0.22;
       --shadow-color: rgba(0, 0, 0, 0.5);
       --card-highlight: #140E2A;
@@ -56,7 +56,7 @@
 
     [data-theme="light"] {
       --bg-app: #F6F4FC;
-      --bg-card: rgba(255, 255, 255, 0.95);
+      --bg-card: rgba(255, 255, 255, 0.96);
       --bg-sub: #F1ECFA;
       --bg-chip: #EDE6F9;
       --bg-input: #FFFFFF;
@@ -67,8 +67,8 @@
       --text-body: #3B1C72;
       --text-sub: #6B4E9B;
       --text-dim: #8F7CAE;
-      --header-bg: rgba(255, 255, 255, 0.92);
-      --nav-bg: rgba(255, 255, 255, 0.95);
+      --header-bg: rgba(255, 255, 255, 0.94);
+      --nav-bg: rgba(255, 255, 255, 0.96);
       --blob-opacity: 0.1;
       --shadow-color: rgba(147, 51, 234, 0.08);
       --card-highlight: #FFFFFF;
@@ -89,7 +89,7 @@
     .animate-fade { animation: fadeIn 0.25s ease-out forwards; }
     .animate-glow { animation: pulseGlow 6s infinite ease-in-out; }
     .pt-safe { padding-top: calc(var(--safe-top) + 12px); }
-    .pb-safe { padding-bottom: calc(var(--safe-bottom) + 84px); }
+    .pb-safe { padding-bottom: calc(var(--safe-bottom) + 140px); }
     
     /* Dynamic Theme Cards */
     .app-card {
@@ -171,7 +171,7 @@
 
       <!-- Quick Theme Toggle & User Info (Header) -->
       <div class="flex items-center gap-2">
-        <!-- 🌙 / ☀️ Theme Switcher Icon on Home Screen -->
+        <!-- 🌙 / ☀️ Theme Switcher Icon on Home Screen Header -->
         <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner hover:scale-105 active:scale-95" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Dark / Light Mode">
           <span id="themeHeaderIcon" class="text-sm font-bold">🌙</span>
         </button>
@@ -249,7 +249,7 @@
     <div id="appDashboard" class="hidden space-y-6">
 
       <!-- ================= TAB 1: SPLIT ================= -->
-      <div id="tab-split" class="space-y-6 animate-fade">
+      <div id="tab-split" class="space-y-6 animate-fade pb-10">
         
         <!-- Welcome Hero Banner -->
         <div id="splitHomeSec" class="space-y-5">
@@ -297,7 +297,7 @@
           </div>
 
           <!-- ================= PROMINENT SHARE & INSTALL APP SECTION ================= -->
-          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 border-2 border-purple-500/30 shadow-xl">
+          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 border-2 border-purple-500/30 shadow-xl mb-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div class="flex items-center gap-3">
                 <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30">
@@ -347,7 +347,7 @@
         </div>
 
         <!-- ================= UPLOAD SECTION ================= -->
-        <section id="uploadSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade">
+        <section id="uploadSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade pb-10">
           <div class="flex items-center justify-between border-b pb-4" style="border-color: var(--border-sub);">
             <div>
               <h2 class="text-xl font-bold" style="color: var(--text-heading);">Upload Receipt</h2>
@@ -388,7 +388,7 @@
         </section>
 
         <!-- ================= SHARE CODE & SUMMARY SCREEN ================= -->
-        <section id="hostShareSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade">
+        <section id="hostShareSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade pb-10">
           <div class="text-center space-y-3">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Receipt Active
@@ -425,46 +425,55 @@
         </section>
 
         <!-- ================= ITEM SELECTION (GUEST & HOST SHARE ASSIGNMENT) ================= -->
-        <section id="itemsSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade">
-          <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b pb-4 gap-3" style="border-color: var(--border-sub);">
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black" style="color: var(--text-heading);">Store Receipt</h2>
-                <span id="receiptCodeBadge" class="border text-xs font-bold px-2.5 py-1 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">#0</span>
+        <section id="itemsSection" class="hidden space-y-4 animate-fade pb-16">
+          <div class="app-card p-5 sm:p-7 rounded-3xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b pb-4 gap-3" style="border-color: var(--border-sub);">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black" style="color: var(--text-heading);">Store Receipt</h2>
+                  <span id="receiptCodeBadge" class="border text-xs font-bold px-2.5 py-1 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">#0</span>
+                </div>
+                <p class="text-xs mt-0.5" style="color: var(--text-sub);">Select your portion (/2, /3, /4, Full) for each product.</p>
               </div>
-              <p class="text-xs mt-0.5" style="color: var(--text-sub);">Select your portion (/2, /3, /4, Full) for each product.</p>
+              <div class="px-4 py-2 rounded-2xl border text-left sm:text-right" style="background: var(--bg-sub); border-color: var(--border-sub);">
+                <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Bill</p>
+                <p id="receiptGrandTotal" class="text-xl font-black" style="color: var(--text-heading);">₹0.00</p>
+              </div>
             </div>
-            <div class="px-4 py-2.5 rounded-2xl border text-left sm:text-right" style="background: var(--bg-sub); border-color: var(--border-sub);">
-              <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Bill</p>
-              <p id="receiptGrandTotal" class="text-xl font-black" style="color: var(--text-heading);">₹0.00</p>
+
+            <!-- Estimated total summary pill -->
+            <div class="border rounded-2xl p-4 flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-main);">
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total</p>
+                <p id="personalEstimatedTotal" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
+              </div>
+              <div class="text-xs font-bold px-3.5 py-1.5 rounded-xl border shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+                <span id="personalSelectedCount" class="font-extrabold text-purple-600 dark:text-purple-300">0</span> items picked
+              </div>
             </div>
+
+            <!-- List of items -->
+            <div id="itemsCardsContainer" class="space-y-3 pt-1"></div>
           </div>
 
-          <div class="border rounded-2xl p-4 flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-main);">
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total</p>
-              <p id="personalEstimatedTotal" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
+          <!-- PROMINENT FLOATING STICKY ACTION BAR FOR SAVE SHARES -->
+          <div class="sticky bottom-[70px] z-30 pt-2 pb-1">
+            <div class="app-card p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-purple-500/50 flex items-center justify-between gap-3 backdrop-blur-2xl">
+              <button onclick="cancelItemSelection()" class="text-xs font-bold px-3.5 py-2.5 rounded-xl border hover:opacity-80 transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">
+                ← Back
+              </button>
+              <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
+                <span>Save My Shares</span>
+                <span id="saveSharesBtnBadge" class="bg-purple-950/70 border border-purple-300/40 text-xs px-2.5 py-1 rounded-lg text-white font-extrabold">₹0.00</span>
+              </button>
             </div>
-            <div class="text-xs font-bold px-3.5 py-1.5 rounded-xl border shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-              <span id="personalSelectedCount" class="font-extrabold text-purple-600 dark:text-purple-300">0</span> items picked
-            </div>
-          </div>
-
-          <div id="itemsCardsContainer" class="space-y-3"></div>
-
-          <div class="pt-4 border-t flex items-center justify-between gap-4" style="border-color: var(--border-sub);">
-            <button onclick="cancelItemSelection()" class="text-xs font-bold hover:opacity-80 transition" style="color: var(--text-sub);">Back</button>
-            <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex items-center gap-2 lavender-glow-btn text-white px-6 py-3.5 rounded-xl font-bold">
-              <span>Save My Shares</span>
-              <span id="saveSharesBtnBadge" class="bg-purple-900/60 border border-purple-400/30 text-xs px-2.5 py-1 rounded-md text-white">₹0.00</span>
-            </button>
           </div>
         </section>
 
       </div>
 
       <!-- ================= TAB 2: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
-      <div id="tab-history" class="hidden space-y-5 animate-fade">
+      <div id="tab-history" class="hidden space-y-5 animate-fade pb-16">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-black" style="color: var(--text-heading);">Expense History</h2>
@@ -476,7 +485,7 @@
           </button>
         </div>
 
-        <div id="historyListContainer" class="space-y-3">
+        <div id="historyListContainer" class="space-y-3 mb-10">
           <div class="p-8 text-center font-medium app-card rounded-3xl" style="color: var(--text-sub);">
             Loading your expense history...
           </div>
@@ -484,7 +493,7 @@
       </div>
 
       <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
-      <div id="tab-profile" class="hidden space-y-5 animate-fade">
+      <div id="tab-profile" class="hidden space-y-5 animate-fade pb-16">
         <h2 class="text-2xl font-black" style="color: var(--text-heading);">My Account</h2>
         
         <div class="app-card p-6 sm:p-8 rounded-3xl space-y-6">
@@ -563,7 +572,7 @@
   </div>
 
   <!-- ================= BOTTOM NAVIGATION BAR ================= -->
-  <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 theme-nav backdrop-blur-xl border-t px-6 py-2 shadow-lg">
+  <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 theme-nav backdrop-blur-xl border-t px-6 py-2 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-around">
       <button onclick="switchTab('split')" id="navBtn-split" class="flex flex-col items-center gap-1 text-purple-600 dark:text-purple-400 py-1 transition font-bold">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
