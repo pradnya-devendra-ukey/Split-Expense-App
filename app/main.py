@@ -28,6 +28,14 @@ app.include_router(user_routes.router)
 def serve_frontend():
     return FileResponse("index.html")
 
+@app.get("/manifest.json")
+def serve_manifest():
+    return FileResponse("manifest.json")
+
+@app.get("/sw.js")
+def serve_sw():
+    return FileResponse("sw.js", media_type="application/javascript")
+
 @app.get("/network-ip")
 def get_network_ip():
     try:
