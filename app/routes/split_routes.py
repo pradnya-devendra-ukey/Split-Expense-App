@@ -66,7 +66,7 @@ def get_receipt_summary(receipt_id: int, db: Session = Depends(get_db)):
 
 @router.post("/assign-user-shares")
 def assign_user_shares(payload: schemas.UserShareRequest, db: Session = Depends(get_db)):
-    """Called by a guest to assign themselves to items, dynamically recalculating fractions."""
+    """Called by a guest/host to assign their shares (e.g. Full, /2, /3, /4 or custom) for items."""
     receipt_items = db.query(models.Item).filter(models.Item.receipt_id == payload.receipt_id).all()
     receipt_item_ids = [item.id for item in receipt_items]
 
@@ -76,28 +76,39 @@ def assign_user_shares(payload: schemas.UserShareRequest, db: Session = Depends(
             models.ItemShare.user_id == payload.user_id
         ).delete(synchronize_session=False)
 
-    for item_id in payload.item_ids:
-        if item_id in receipt_item_ids:
-            db.add(models.ItemShare(
-                item_id=item_id,
-                user_id=payload.user_id,
-                share_fraction=1.0
-            ))
-    db.commit()
-
-    if receipt_item_ids:
-        all_shares = db.query(models.ItemShare).filter(
-            models.ItemShare.item_id.in_(receipt_item_ids)
-        ).all()
-        
-        item_user_counts = defaultdict(int)
-        for share in all_shares:
-            item_user_counts[share.item_id] += 1
-            
-        for share in all_shares:
-            if item_user_counts[share.item_id] > 0:
-                share.share_fraction = 1.0 / item_user_counts[share.item_id]
-        
+    if payload.shares is not None:
+        for share in payload.shares:
+            if share.item_id in receipt_item_ids and share.fraction > 0:
+                frac = min(max(float(share.fraction), 0.0), 10.0) # clamped
+                db.add(models.ItemShare(
+                    item_id=share.item_id,
+                    user_id=payload.user_id,
+                    share_fraction=round(frac, 4)
+                ))
         db.commit()
+    elif payload.item_ids is not None:
+        for item_id in payload.item_ids:
+            if item_id in receipt_item_ids:
+                db.add(models.ItemShare(
+                    item_id=item_id,
+                    user_id=payload.user_id,
+                    share_fraction=1.0
+                ))
+        db.commit()
+
+        if receipt_item_ids:
+            all_shares = db.query(models.ItemShare).filter(
+                models.ItemShare.item_id.in_(receipt_item_ids)
+            ).all()
+            
+            item_user_counts = defaultdict(int)
+            for share in all_shares:
+                item_user_counts[share.item_id] += 1
+                
+            for share in all_shares:
+                if item_user_counts[share.item_id] > 0:
+                    share.share_fraction = 1.0 / item_user_counts[share.item_id]
+            
+            db.commit()
     
     return {"message": "User shares updated successfully"}

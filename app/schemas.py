@@ -36,6 +36,8 @@ class ItemShareRequest(BaseModel):
 class ItemBreakdown(BaseModel):
     item_name: str
     cost: float
+    share_fraction: Optional[float] = 1.0
+    portion_label: Optional[str] = "Full"
 
 class UserTotalOwed(BaseModel):
     user_id: int
@@ -54,7 +56,13 @@ class BulkAssignRequest(BaseModel):
     receipt_id: int
     assignments: List[ItemAssignment]
 
+class UserItemShare(BaseModel):
+    item_id: int
+    fraction: float  # e.g., 1.0 (full), 0.5 (1/2), 0.3333 (1/3), 0.25 (1/4)
+    portion_label: Optional[str] = None
+
 class UserShareRequest(BaseModel):
     receipt_id: int
     user_id: int
-    item_ids: List[int]
+    item_ids: Optional[List[int]] = None
+    shares: Optional[List[UserItemShare]] = None
