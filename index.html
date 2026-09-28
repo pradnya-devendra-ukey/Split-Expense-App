@@ -169,10 +169,10 @@
         </div>
       </div>
 
-      <!-- User Info & Theme Switcher -->
+      <!-- Quick Theme Toggle & User Info (Header) -->
       <div class="flex items-center gap-2">
-        <!-- Quick Theme Toggle Button in Header -->
-        <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Light / Dark Mode">
+        <!-- 🌙 / ☀️ Theme Switcher Icon on Home Screen -->
+        <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner hover:scale-105 active:scale-95" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Dark / Light Mode">
           <span id="themeHeaderIcon" class="text-sm font-bold">🌙</span>
         </button>
 
@@ -296,22 +296,54 @@
             </div>
           </div>
 
-          <!-- Share App Banner -->
-          <div class="app-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="text-left w-full sm:w-auto">
-              <p class="text-xs font-bold" style="color: var(--text-heading);">Share App with Friends</p>
-              <p class="text-[11px]" style="color: var(--text-sub);">Invite friends to open on mobile and split instantly.</p>
-            </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button onclick="shareAppUrl()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 border px-3.5 py-2 rounded-xl text-xs font-bold transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                Share Link
+          <!-- ================= PROMINENT SHARE & INSTALL APP SECTION ================= -->
+          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 border-2 border-purple-500/30 shadow-xl">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30">
+                  📱
+                </div>
+                <div>
+                  <h3 class="text-base font-extrabold" style="color: var(--text-heading);">Share & Install Mobile App</h3>
+                  <p class="text-xs" style="color: var(--text-sub);">Send the app link to friends so they can install & join splits.</p>
+                </div>
+              </div>
+              <button id="pwaInstallBtn" onclick="installPwaDirect()" class="hidden bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 transition shadow-md">
+                ⬇️ Install App
               </button>
-              <button onclick="copyAppUrl()" class="border px-3 py-2 rounded-xl text-xs font-bold transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);" title="Copy App Link">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <button onclick="shareViaWhatsApp()" class="flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 px-4 rounded-2xl text-xs font-bold hover:brightness-110 transition shadow-md shadow-green-900/20 active:scale-[0.99]">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.158.572 4.183 1.572 5.932l-1.665 6.084 6.223-1.633c1.677.915 3.597 1.431 5.637 1.431 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/></svg>
+                Share via WhatsApp
+              </button>
+
+              <button onclick="shareAppUrl()" class="flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-4 rounded-2xl text-xs font-bold active:scale-[0.99]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Share App Link
+              </button>
+            </div>
+
+            <!-- Copy Link & Guide Box -->
+            <div class="flex items-center justify-between gap-2 p-3 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
+              <div class="truncate text-xs font-mono" style="color: var(--text-sub);" id="appLinkTextDisplay">
+                https://split-expense-app-qhu3.onrender.com
+              </div>
+              <button onclick="copyAppUrl()" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition shrink-0" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
                 Copy
               </button>
             </div>
+
+            <!-- Install Tips for Mobile -->
+            <div class="p-3 rounded-2xl border text-[11px] space-y-1.5" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+              <p class="font-bold text-xs" style="color: var(--text-heading);">📲 How friends can install this on phone:</p>
+              <p>• <b>Android (Chrome):</b> Open link ➔ Tap <b>⋮</b> (Top Right) ➔ Tap <b>Install app</b> / <b>Add to Home Screen</b>.</p>
+              <p>• <b>iPhone (Safari):</b> Open link ➔ Tap <b>Share</b> (⎋) ➔ Tap <b>Add to Home Screen</b>.</p>
+            </div>
           </div>
+
         </div>
 
         <!-- ================= UPLOAD SECTION ================= -->
@@ -451,7 +483,7 @@
         </div>
       </div>
 
-      <!-- ================= TAB 3: PROFILE / ACCOUNT & THEME SETTINGS ================= -->
+      <!-- ================= TAB 3: PROFILE / ACCOUNT ================= -->
       <div id="tab-profile" class="hidden space-y-5 animate-fade">
         <h2 class="text-2xl font-black" style="color: var(--text-heading);">My Account</h2>
         
@@ -478,21 +510,15 @@
             </div>
           </div>
 
-          <!-- Theme Appearance Selector -->
+          <!-- Share App Box inside Profile -->
           <div class="p-4 rounded-2xl border space-y-3" style="background: var(--bg-sub); border-color: var(--border-sub);">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-bold" style="color: var(--text-heading);">App Appearance</p>
-                <p class="text-[11px]" style="color: var(--text-sub);">Choose between Lavender Dark or Light mode</p>
+                <p class="text-xs font-bold" style="color: var(--text-heading);">Share App with Group</p>
+                <p class="text-[11px]" style="color: var(--text-sub);">Invite friends or family to join splits</p>
               </div>
-              <span id="currentThemeLabel" class="text-xs font-bold px-2.5 py-1 rounded-lg border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">Dark Mode</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button type="button" onclick="setTheme('dark')" id="themeSelectDarkBtn" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition">
-                <span>🌙</span> Dark Mode
-              </button>
-              <button type="button" onclick="setTheme('light')" id="themeSelectLightBtn" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition">
-                <span>☀️</span> Light Mode
+              <button onclick="shareAppUrl()" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
+                Share 🚀
               </button>
             </div>
           </div>
@@ -571,6 +597,28 @@
     let itemSharesState = {};
     let currentTab = 'split';
     let authMode = 'login';
+    let deferredPrompt = null;
+
+    // --- PWA INSTALL CAPTURE ---
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.classList.remove('hidden');
+    });
+
+    async function installPwaDirect() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('App installed successfully!');
+        }
+        deferredPrompt = null;
+      } else {
+        showToast('To install: Tap browser menu (⋮) -> Install App / Add to Home Screen');
+      }
+    }
 
     // --- THEME MANAGEMENT ---
     function applyTheme(theme) {
@@ -581,29 +629,8 @@
       const icon = document.getElementById('themeHeaderIcon');
       if (icon) icon.innerText = theme === 'dark' ? '🌙' : '☀️';
 
-      const label = document.getElementById('currentThemeLabel');
-      if (label) label.innerText = theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
-
       const metaColor = document.getElementById('metaThemeColor');
       if (metaColor) metaColor.setAttribute('content', theme === 'dark' ? '#09070F' : '#F6F4FC');
-
-      const darkBtn = document.getElementById('themeSelectDarkBtn');
-      const lightBtn = document.getElementById('themeSelectLightBtn');
-      if (darkBtn && lightBtn) {
-        if (theme === 'dark') {
-          darkBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-purple-500 bg-purple-900/40 text-white text-xs font-bold shadow-sm';
-          lightBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold opacity-60 hover:opacity-100 transition';
-          lightBtn.style.background = 'var(--bg-card)';
-          lightBtn.style.borderColor = 'var(--border-sub)';
-          lightBtn.style.color = 'var(--text-body)';
-        } else {
-          lightBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 border-purple-600 bg-purple-100 text-purple-950 text-xs font-bold shadow-sm';
-          darkBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold opacity-60 hover:opacity-100 transition';
-          darkBtn.style.background = 'var(--bg-card)';
-          darkBtn.style.borderColor = 'var(--border-sub)';
-          darkBtn.style.color = 'var(--text-body)';
-        }
-      }
 
       // Re-render any visible item cards so active states match theme
       if (currentReceiptItems && currentReceiptItems.length > 0) {
@@ -614,11 +641,6 @@
     function toggleTheme() {
       applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
       showToast(`Switched to ${currentTheme === 'dark' ? 'Dark' : 'Light'} Mode`);
-    }
-
-    function setTheme(mode) {
-      applyTheme(mode);
-      showToast(`Theme updated to ${mode === 'dark' ? 'Dark' : 'Light'} Mode`);
     }
 
     function showToast(message, type = 'success') {
@@ -635,6 +657,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme(currentTheme);
       checkAuthState();
+      
+      const linkDisplay = document.getElementById('appLinkTextDisplay');
+      if (linkDisplay) linkDisplay.innerText = window.location.origin;
+
       if (receiptParam && currentUser) {
         loadReceiptForJoining(parseInt(receiptParam));
       }
@@ -1271,13 +1297,19 @@
       return receiptId ? `${base}/?receipt_id=${receiptId}` : base;
     }
 
+    async function shareViaWhatsApp() {
+      const url = getShareableAppUrl();
+      const message = encodeURIComponent(`Hey! Use SplitExpense to split restaurant bills & receipts with custom shares instantly:\n${url}`);
+      window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
+    }
+
     async function shareAppUrl() {
       const url = getShareableAppUrl();
       if (navigator.share) {
         try {
           await navigator.share({
             title: 'SplitExpense App',
-            text: 'Split bills and receipts with custom shares instantly:',
+            text: 'Split bills and receipts with custom shares instantly on mobile:',
             url: url
           });
         } catch(e) {}
