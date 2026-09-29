@@ -593,10 +593,13 @@
       </div>
 
       <div class="space-y-2 pt-1">
-        <button id="qrDirectPayBtn" onclick="openDirectUpiApp()" class="w-full py-3 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-lg">
+        <button id="qrInstantConfirmBtn" onclick="qrConfirmPayment()" class="w-full py-3 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl font-bold text-xs shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5">
+          <span>✅ I Have Completed Payment (Mark Paid)</span>
+        </button>
+        <button id="qrDirectPayBtn" onclick="openDirectUpiApp()" class="w-full py-2.5 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
           ⚡ Open in UPI App (GPay/PhonePe/Paytm)
         </button>
-        <button onclick="copyModalUpi()" class="w-full py-2.5 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+        <button onclick="copyModalUpi()" class="w-full py-2 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
           Copy UPI ID
         </button>
       </div>
@@ -821,12 +824,15 @@
     }
 
     let currentQrPaymentState = null;
-    function openUpiQrModal(upiId, payeeName, amount = 0) {
+    let qrPollInterval = null;
+
+    function openUpiQrModal(upiId, payeeName, amount = 0, targetUserId = null) {
       const modal = document.getElementById('upiQrModal');
       const qrImg = document.getElementById('upiQrImage');
       const payeeEl = document.getElementById('qrPayeeName');
       const amtEl = document.getElementById('qrPayAmount');
       const upiText = document.getElementById('qrUpiIdText');
+      const instantConfirmBtn = document.getElementById('qrInstantConfirmBtn');
       
       payeeEl.innerText = `Pay to: ${payeeName}`;
       amtEl.innerText = amount > 0 ? `₹${amount.toFixed(2)}` : 'Custom Amount';
@@ -835,10 +841,19 @@
       const targetRecId = activeReceiptId || modalReceiptId;
       currentQrPaymentState = {
         receipt_id: targetRecId,
-        user_id: currentUser ? currentUser.id : 9999,
+        user_id: targetUserId || (currentUser ? currentUser.id : 9999),
         amount: amount,
         payee: payeeName
       };
+
+      if (instantConfirmBtn) {
+        if (amount > 0) {
+          instantConfirmBtn.classList.remove('hidden');
+          instantConfirmBtn.innerHTML = `<span>✅ Confirm & Mark Paid (₹${amount.toFixed(2)})</span>`;
+        } else {
+          instantConfirmBtn.classList.add('hidden');
+        }
+      }
 
       const upiUri = amount > 0 
         ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('Split for Receipt #' + (targetRecId || ''))}&cu=INR`
@@ -847,10 +862,60 @@
       currentQrUpiLink = upiUri;
       qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
       modal.classList.remove('hidden');
+
+      // Live Polling while QR Modal is displayed
+      if (qrPollInterval) clearInterval(qrPollInterval);
+      if (amount > 0 && targetRecId) {
+        qrPollInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`${API_BASE}/split/summary/${targetRecId}`);
+            if (res.ok) {
+              const summaryData = await res.json();
+              const userRow = summaryData.find(r => r.user_id === currentQrPaymentState.user_id);
+              if (userRow && userRow.is_paid) {
+                clearInterval(qrPollInterval);
+                qrPollInterval = null;
+                showToast('🎉 Payment Confirmed & Settled in App!');
+                closeUpiQrModal();
+                fetchSummary(targetRecId, 'liveSummaryList');
+                if (!document.getElementById('receiptModal').classList.contains('hidden')) {
+                  fetchSummary(targetRecId, 'modalSummaryList');
+                }
+              }
+            }
+          } catch(e) {}
+        }, 2500);
+      }
     }
 
     function closeUpiQrModal() {
+      if (qrPollInterval) {
+        clearInterval(qrPollInterval);
+        qrPollInterval = null;
+      }
       document.getElementById('upiQrModal').classList.add('hidden');
+    }
+
+    async function qrConfirmPayment() {
+      if (!currentQrPaymentState || !currentQrPaymentState.receipt_id) return closeUpiQrModal();
+      const btn = document.getElementById('qrInstantConfirmBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Updating Database...';
+      }
+
+      await recordPaymentSettlement(
+        currentQrPaymentState.receipt_id,
+        currentQrPaymentState.user_id,
+        true,
+        currentQrPaymentState.amount
+      );
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✅ Confirm & Mark Paid</span>';
+      }
+      closeUpiQrModal();
     }
 
     function openDirectUpiApp() {
@@ -1041,7 +1106,7 @@
 
         renderItemsSelection(receipt);
         document.getElementById('itemsSection').classList.remove('hidden');
-        fetchSummary(activeReceiptId, 'liveSummaryList');
+        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
 
       } catch (err) {
         showToast(`Error: ${err.message}`, 'error');
@@ -1380,7 +1445,7 @@
         if (!res.ok) throw new Error(data.detail);
 
         showToast('Your shares have been saved!');
-        fetchSummary(activeReceiptId, 'liveSummaryList');
+        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
         document.getElementById('hostShareSection').classList.remove('hidden');
       } catch (err) {
         showToast(err.message, 'error');
@@ -1485,8 +1550,34 @@
       checkPendingPaymentReturn();
     });
 
+    let liveSummaryInterval = null;
+    function startLiveSummaryPolling(receiptId, targetListId) {
+      if (liveSummaryInterval) clearInterval(liveSummaryInterval);
+      if (!receiptId) return;
+      fetchSummary(receiptId, targetListId);
+      liveSummaryInterval = setInterval(() => {
+        const isModalOpen = !document.getElementById('receiptModal').classList.contains('hidden');
+        const isLiveSecOpen = !document.getElementById('hostShareSection').classList.contains('hidden');
+        if (targetListId === 'modalSummaryList' && isModalOpen) {
+          fetchSummary(receiptId, targetListId, true);
+        } else if (targetListId === 'liveSummaryList' && isLiveSecOpen) {
+          fetchSummary(receiptId, targetListId, true);
+        } else if (!isModalOpen && !isLiveSecOpen) {
+          clearInterval(liveSummaryInterval);
+          liveSummaryInterval = null;
+        }
+      }, 2500);
+    }
+
+    function stopLiveSummaryPolling() {
+      if (liveSummaryInterval) {
+        clearInterval(liveSummaryInterval);
+        liveSummaryInterval = null;
+      }
+    }
+
     // --- SUMMARY RENDERING WITH 1-TAP UPI PAYMENT ---
-    async function fetchSummary(receiptId, targetListId) {
+    async function fetchSummary(receiptId, targetListId, isSilent = false) {
       if (!receiptId) return;
       try {
         // Fetch both receipt details (for host UPI) and split summary
@@ -1555,7 +1646,7 @@
               if (isMyRow && !isCurrentUserHost) {
                 if (hostUpi) {
                   upiAction = `
-                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1">
+                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1 shadow-md">
                       ⚡ Pay Host ₹${row.total_owed.toFixed(2)} (UPI)
                     </button>
                   `;
@@ -1566,7 +1657,7 @@
                 // Host viewing friend's row can show QR for friend to scan
                 if (hostUpi) {
                   upiAction = `
-                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-purple-300 border-purple-500/30 hover:bg-purple-900/30 flex items-center gap-1" style="background: var(--bg-chip);">
+                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-purple-300 border-purple-500/30 hover:bg-purple-900/30 flex items-center gap-1" style="background: var(--bg-chip);">
                       Show QR
                     </button>
                   `;
@@ -1609,7 +1700,7 @@
           list.appendChild(div);
         });
       } catch (err) {
-        showToast(err.message, 'error');
+        if (!isSilent) showToast(err.message, 'error');
       }
     }
 
@@ -1729,7 +1820,7 @@
         document.getElementById('modalDateSubtitle').innerText = data.uploader_name ? `Hosted by ${data.uploader_name}` : 'Stored in memory';
         document.getElementById('modalGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
 
-        fetchSummary(receiptId, 'modalSummaryList');
+        startLiveSummaryPolling(receiptId, 'modalSummaryList');
         document.getElementById('receiptModal').classList.remove('hidden');
       } catch (err) {
         showToast(err.message, 'error');
@@ -1737,6 +1828,7 @@
     }
 
     function closeReceiptModal() {
+      stopLiveSummaryPolling();
       document.getElementById('receiptModal').classList.add('hidden');
     }
 
