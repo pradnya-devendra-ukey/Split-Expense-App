@@ -603,6 +603,39 @@
     </div>
   </div>
 
+  <!-- ================= PAYMENT CONFIRMATION MODAL ================= -->
+  <div id="paymentConfirmModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-4 text-center animate-slide-up shadow-2xl border-2 border-emerald-500/40">
+      <div class="w-14 h-14 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-lg shadow-emerald-900/40">
+        ₹
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-lg font-black" style="color: var(--text-heading);">Confirm UPI Payment</h3>
+        <p class="text-xs" style="color: var(--text-sub);">Did you complete your payment via UPI app?</p>
+      </div>
+
+      <div class="p-3.5 rounded-2xl border text-center space-y-1" style="background: var(--bg-sub); border-color: var(--border-sub);">
+        <p class="text-[10px] uppercase font-bold text-emerald-400">Amount to Settle</p>
+        <p id="confirmModalAmountText" class="text-2xl font-black" style="color: var(--text-heading);">₹0.00</p>
+        <p id="confirmModalPayeeText" class="text-xs font-semibold" style="color: var(--text-sub);">To: Host</p>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-left" style="color: var(--text-sub);">UPI Reference / UTR No. (Optional)</label>
+        <input type="text" id="confirmModalUtrInput" placeholder="e.g. 423456789012" class="w-full p-2.5 theme-input rounded-xl text-xs font-mono outline-none border" />
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button id="confirmPaidBtn" onclick="confirmPaymentSuccess()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl font-bold text-xs shadow-lg active:scale-95 transition">
+          Yes, Mark as Paid in App ✅
+        </button>
+        <button onclick="closePaymentConfirmModal()" class="w-full py-2 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+          Not Yet / Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= BOTTOM NAVIGATION BAR ================= -->
   <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 theme-nav backdrop-blur-xl border-t px-6 py-2 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-around">
@@ -787,6 +820,7 @@
       openUpiQrModal(currentUser.upi_id, currentUser.name, 0);
     }
 
+    let currentQrPaymentState = null;
     function openUpiQrModal(upiId, payeeName, amount = 0) {
       const modal = document.getElementById('upiQrModal');
       const qrImg = document.getElementById('upiQrImage');
@@ -798,8 +832,16 @@
       amtEl.innerText = amount > 0 ? `₹${amount.toFixed(2)}` : 'Custom Amount';
       upiText.innerText = upiId;
 
+      const targetRecId = activeReceiptId || modalReceiptId;
+      currentQrPaymentState = {
+        receipt_id: targetRecId,
+        user_id: currentUser ? currentUser.id : 9999,
+        amount: amount,
+        payee: payeeName
+      };
+
       const upiUri = amount > 0 
-        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('SplitExpense Bill')}&cu=INR`
+        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('Split for Receipt #' + (targetRecId || ''))}&cu=INR`
         : `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
 
       currentQrUpiLink = upiUri;
@@ -813,6 +855,12 @@
 
     function openDirectUpiApp() {
       if (currentQrUpiLink) {
+        if (currentQrPaymentState && currentQrPaymentState.amount > 0) {
+          sessionStorage.setItem('pending_upi_payment', JSON.stringify({
+            ...currentQrPaymentState,
+            timestamp: Date.now()
+          }));
+        }
         window.location.href = currentQrUpiLink;
       }
     }
@@ -1273,6 +1321,15 @@
         submitPersonalShares().catch(() => {});
       }
 
+      // Set pending payment state for automatic return detection
+      sessionStorage.setItem('pending_upi_payment', JSON.stringify({
+        receipt_id: activeReceiptId,
+        user_id: currentUser ? currentUser.id : 9999,
+        amount: total,
+        payee: hostName,
+        timestamp: Date.now()
+      }));
+
       // Construct UPI Deeplink URI
       const formattedAmount = total.toFixed(2);
       const note = `Split for ${storeName} (#${activeReceiptId})`;
@@ -1332,23 +1389,101 @@
       }
     }
 
-    // --- PAYMENT STATUS TRACKER IN LOCALSTORAGE ---
-    function getPaymentStatus(receiptId, userId) {
-      const store = JSON.parse(localStorage.getItem(`settled_receipt_${receiptId}`) || '{}');
-      return !!store[userId];
+    // --- DATABASE-BACKED PAYMENT SETTLEMENT ---
+    async function recordPaymentSettlement(receiptId, userId, isPaid = true, amount = null, transactionRef = null) {
+      try {
+        const res = await fetch(`${API_BASE}/split/settle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receipt_id: receiptId,
+            user_id: userId,
+            is_paid: isPaid,
+            amount: amount,
+            transaction_ref: transactionRef
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not update payment status');
+
+        showToast(isPaid ? 'Payment marked as Paid in database! ✅' : 'Payment marked as Pending ⏳');
+        fetchSummary(receiptId, 'liveSummaryList');
+        if (!document.getElementById('receiptModal').classList.contains('hidden')) {
+          fetchSummary(receiptId, 'modalSummaryList');
+        }
+        if (currentTab === 'history') {
+          loadUserHistory();
+        }
+        return true;
+      } catch (err) {
+        showToast(err.message, 'error');
+        return false;
+      }
     }
 
-    function togglePaymentStatus(receiptId, userId) {
-      const key = `settled_receipt_${receiptId}`;
-      const store = JSON.parse(localStorage.getItem(key) || '{}');
-      store[userId] = !store[userId];
-      localStorage.setItem(key, JSON.stringify(store));
-      fetchSummary(receiptId, 'liveSummaryList');
-      if (!document.getElementById('receiptModal').classList.contains('hidden')) {
-        fetchSummary(receiptId, 'modalSummaryList');
-      }
-      showToast(store[userId] ? 'Marked as Paid! ✅' : 'Payment status marked as Pending ⏳');
+    function togglePaymentStatus(receiptId, userId, currentIsPaid) {
+      recordPaymentSettlement(receiptId, userId, !currentIsPaid);
     }
+
+    // --- AUTOMATIC APP RETURN CONFIRMATION ---
+    let activeConfirmPaymentData = null;
+    function openPaymentConfirmModal(data) {
+      activeConfirmPaymentData = data;
+      document.getElementById('confirmModalAmountText').innerText = `₹${parseFloat(data.amount || 0).toFixed(2)}`;
+      document.getElementById('confirmModalPayeeText').innerText = `To: ${data.payee || 'Host'}`;
+      document.getElementById('confirmModalUtrInput').value = '';
+      document.getElementById('paymentConfirmModal').classList.remove('hidden');
+    }
+
+    function closePaymentConfirmModal() {
+      sessionStorage.removeItem('pending_upi_payment');
+      activeConfirmPaymentData = null;
+      document.getElementById('paymentConfirmModal').classList.add('hidden');
+    }
+
+    async function confirmPaymentSuccess() {
+      if (!activeConfirmPaymentData) return closePaymentConfirmModal();
+      const utr = document.getElementById('confirmModalUtrInput').value.trim() || null;
+      const btn = document.getElementById('confirmPaidBtn');
+      btn.disabled = true;
+      btn.innerText = 'Updating database...';
+
+      const ok = await recordPaymentSettlement(
+        activeConfirmPaymentData.receipt_id,
+        activeConfirmPaymentData.user_id,
+        true,
+        activeConfirmPaymentData.amount,
+        utr
+      );
+
+      btn.disabled = false;
+      btn.innerText = 'Yes, Mark as Paid in App ✅';
+      if (ok) {
+        closePaymentConfirmModal();
+      }
+    }
+
+    function checkPendingPaymentReturn() {
+      const pending = sessionStorage.getItem('pending_upi_payment');
+      if (!pending) return;
+      try {
+        const data = JSON.parse(pending);
+        // If payment initiated within the last 15 minutes, prompt confirmation
+        if (data && data.receipt_id && (Date.now() - data.timestamp < 15 * 60 * 1000)) {
+          openPaymentConfirmModal(data);
+        }
+      } catch(e) {}
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkPendingPaymentReturn();
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      checkPendingPaymentReturn();
+    });
 
     // --- SUMMARY RENDERING WITH 1-TAP UPI PAYMENT ---
     async function fetchSummary(receiptId, targetListId) {
@@ -1383,9 +1518,10 @@
           const div = document.createElement('div');
           div.className = 'p-3.5 flex flex-col gap-2';
           
-          const isPaid = getPaymentStatus(receiptId, row.user_id);
+          const isPaid = !!row.is_paid;
           const isHostRow = (receiptData.uploader_id && row.user_id === receiptData.uploader_id);
           const isMyRow = (currentUser && currentUser.id === row.user_id);
+          const settledDate = row.settled_at;
 
           let itemsHtml = (row.items && row.items.length > 0)
             ? row.items.map(i => `
@@ -1411,8 +1547,8 @@
             } else {
               // Participant row who owes money to the host
               const statusBadge = isPaid 
-                ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅</button>`
-                : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
+                ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id}, true)" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅${settledDate ? ` <span class="text-[9px] opacity-80">(${settledDate})</span>` : ''}</button>`
+                : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id}, false)" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
 
               let upiAction = '';
               // Non-host participant viewing their own row pays the host

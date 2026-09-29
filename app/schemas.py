@@ -51,7 +51,17 @@ class UserTotalOwed(BaseModel):
     user_name: str
     upi_id: Optional[str] = None
     total_owed: float
+    is_paid: bool = False
+    settled_at: Optional[str] = None
+    transaction_ref: Optional[str] = None
     items: List[ItemBreakdown] = []
+
+class SettlementRequest(BaseModel):
+    receipt_id: int
+    user_id: int
+    is_paid: bool = True
+    amount: Optional[float] = None
+    transaction_ref: Optional[str] = None
 
 class UserBulkCreate(BaseModel):
     names: List[str]
@@ -101,4 +111,5 @@ class ReceiptHistoryItem(BaseModel):
     is_uploader: bool
     uploader_name: str
     my_share_cost: float
+    is_paid: bool = False
     items_count: int

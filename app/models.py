@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -41,3 +41,13 @@ class ItemShare(Base):
     share_fraction = Column(Numeric(5, 4), nullable=False)
 
     item = relationship("Item", back_populates="shares")
+
+class ReceiptSettlement(Base):
+    __tablename__ = "receipt_settlements"
+    id = Column(Integer, primary_key=True, index=True)
+    receipt_id = Column(Integer, ForeignKey("receipts.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    is_paid = Column(Boolean, default=True)
+    amount = Column(Numeric(10, 2), nullable=True)
+    transaction_ref = Column(String(100), nullable=True)
+    settled_at = Column(DateTime, default=datetime.utcnow)

@@ -1,11 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from collections import defaultdict
+from datetime import datetime
 from app.database import get_db
 from app import models, schemas
 from app.services.split_service import calculate_receipt_totals
 
 router = APIRouter(prefix="/split", tags=["Split"])
+
+@router.post("/settle")
+def settle_user_payment(payload: schemas.SettlementRequest, db: Session = Depends(get_db)):
+    """Records or toggles a user's payment settlement for a specific receipt in the database."""
+    settlement = db.query(models.ReceiptSettlement).filter(
+        models.ReceiptSettlement.receipt_id == payload.receipt_id,
+        models.ReceiptSettlement.user_id == payload.user_id
+    ).first()
+
+    if settlement:
+        settlement.is_paid = payload.is_paid
+        if payload.amount is not None:
+            settlement.amount = payload.amount
+        if payload.transaction_ref:
+            settlement.transaction_ref = payload.transaction_ref
+        settlement.settled_at = datetime.utcnow()
+    else:
+        settlement = models.ReceiptSettlement(
+            receipt_id=payload.receipt_id,
+            user_id=payload.user_id,
+            is_paid=payload.is_paid,
+            amount=payload.amount,
+            transaction_ref=payload.transaction_ref,
+            settled_at=datetime.utcnow()
+        )
+        db.add(settlement)
+
+    db.commit()
+    return {
+        "message": "Payment settlement updated successfully",
+        "receipt_id": payload.receipt_id,
+        "user_id": payload.user_id,
+        "is_paid": settlement.is_paid,
+        "settled_at": settlement.settled_at.strftime("%b %d, %I:%M %p") if settlement.settled_at else None
+    }
 
 @router.post("/assign-shares")
 def assign_item_shares(payload: schemas.ItemShareRequest, db: Session = Depends(get_db)):

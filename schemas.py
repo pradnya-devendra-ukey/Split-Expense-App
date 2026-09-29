@@ -7,8 +7,12 @@ class UserCreate(BaseModel):
 
 class UserResponse(UserCreate):
     id: int
+    upi_id: Optional[str] = None
     class Config:
         from_attributes = True
+
+class UserUpiUpdate(BaseModel):
+    upi_id: str
 
 class ItemResponse(BaseModel):
     id: int
@@ -21,6 +25,9 @@ class ReceiptResponse(BaseModel):
     id: int
     store_name: Optional[str]
     total_amount: float
+    uploader_id: Optional[int] = None
+    uploader_name: Optional[str] = None
+    uploader_upi_id: Optional[str] = None
     items: List[ItemResponse]
     class Config:
         from_attributes = True
@@ -42,8 +49,19 @@ class ItemBreakdown(BaseModel):
 class UserTotalOwed(BaseModel):
     user_id: int
     user_name: str
+    upi_id: Optional[str] = None
     total_owed: float
+    is_paid: bool = False
+    settled_at: Optional[str] = None
+    transaction_ref: Optional[str] = None
     items: List[ItemBreakdown] = []
+
+class SettlementRequest(BaseModel):
+    receipt_id: int
+    user_id: int
+    is_paid: bool = True
+    amount: Optional[float] = None
+    transaction_ref: Optional[str] = None
 
 class UserBulkCreate(BaseModel):
     names: List[str]
@@ -82,6 +100,7 @@ class UserAuthResponse(BaseModel):
     name: str
     username: Optional[str] = None
     email: Optional[str] = None
+    upi_id: Optional[str] = None
     token: str
 
 class ReceiptHistoryItem(BaseModel):
@@ -92,4 +111,5 @@ class ReceiptHistoryItem(BaseModel):
     is_uploader: bool
     uploader_name: str
     my_share_cost: float
+    is_paid: bool = False
     items_count: int

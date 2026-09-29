@@ -45,7 +45,7 @@ def sync_postgres_sequences():
     try:
         with engine.connect() as conn:
             if not engine.url.drivername.startswith("sqlite"):
-                for table in ["users", "receipts", "items", "item_shares"]:
+                for table in ["users", "receipts", "items", "item_shares", "receipt_settlements"]:
                     conn.execute(text(f"""
                         SELECT setval(
                             pg_get_serial_sequence('{table}', 'id'),

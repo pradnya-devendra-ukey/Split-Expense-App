@@ -50,9 +50,24 @@ def calculate_receipt_totals(receipt_id: int, db: Session):
             "portion_label": format_portion_label(frac)
         })
 
+    # Fetch existing settlements for this receipt
+    settlements = db.query(models.ReceiptSettlement).filter(
+        models.ReceiptSettlement.receipt_id == receipt_id
+    ).all()
+    settled_map = {s.user_id: s for s in settlements}
+
     result = []
     for uid, data in user_totals.items():
         data["total_owed"] = round(data["total_owed"], 2)
+        settlement = settled_map.get(uid)
+        if settlement and settlement.is_paid:
+            data["is_paid"] = True
+            data["settled_at"] = settlement.settled_at.strftime("%b %d, %I:%M %p") if settlement.settled_at else None
+            data["transaction_ref"] = settlement.transaction_ref
+        else:
+            data["is_paid"] = False
+            data["settled_at"] = None
+            data["transaction_ref"] = None
         result.append(schemas.UserTotalOwed(**data))
     
     return result
