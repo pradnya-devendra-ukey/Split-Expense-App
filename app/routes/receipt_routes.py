@@ -46,7 +46,15 @@ async def scan_and_save_receipt(
         
         db.commit()
         db.refresh(db_receipt)
-        return db_receipt
+        return schemas.ReceiptResponse(
+            id=db_receipt.id,
+            store_name=db_receipt.store_name,
+            total_amount=float(db_receipt.total_amount),
+            uploader_id=db_receipt.uploader_id,
+            uploader_name=uploader.name if uploader else "Unknown",
+            uploader_upi_id=uploader.upi_id if uploader else None,
+            items=[schemas.ItemResponse.model_validate(item) for item in db_receipt.items]
+        )
     except ValueError as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))

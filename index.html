@@ -444,14 +444,20 @@
               </div>
             </div>
 
-            <!-- Estimated total summary pill -->
-            <div class="border rounded-2xl p-4 flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-main);">
+            <!-- Estimated total summary pill with Pay Now Deeplink Button -->
+            <div class="border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
               <div>
                 <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total</p>
                 <p id="personalEstimatedTotal" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
               </div>
-              <div class="text-xs font-bold px-3.5 py-1.5 rounded-xl border shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-                <span id="personalSelectedCount" class="font-extrabold text-purple-600 dark:text-purple-300">0</span> items picked
+              <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <div class="text-xs font-bold px-3 py-2 rounded-xl border shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+                  <span id="personalSelectedCount" class="font-extrabold text-purple-600 dark:text-purple-300">0</span> items
+                </div>
+                <!-- ⚡ Instant Pay Now Deeplink Button Beside Calculation -->
+                <button id="payCalculatedShareBtn" onclick="payCalculatedTotalNow()" class="hidden flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-[0_0_18px_rgba(16,185,129,0.35)] active:scale-95 transition">
+                  <span>⚡ Pay Now</span>
+                </button>
               </div>
             </div>
 
@@ -459,15 +465,18 @@
             <div id="itemsCardsContainer" class="space-y-3 pt-1"></div>
           </div>
 
-          <!-- PROMINENT FLOATING STICKY ACTION BAR FOR SAVE SHARES -->
+          <!-- PROMINENT FLOATING STICKY ACTION BAR FOR SAVE SHARES & PAY NOW -->
           <div class="sticky bottom-[70px] z-30 pt-2 pb-1">
-            <div class="app-card p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-purple-500/50 flex items-center justify-between gap-3 backdrop-blur-2xl">
-              <button onclick="cancelItemSelection()" class="text-xs font-bold px-3.5 py-2.5 rounded-xl border hover:opacity-80 transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">
+            <div class="app-card p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-purple-500/50 flex items-center justify-between gap-2.5 backdrop-blur-2xl">
+              <button onclick="cancelItemSelection()" class="text-xs font-bold px-3 py-2.5 rounded-xl border hover:opacity-80 transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">
                 ← Back
               </button>
-              <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
-                <span>Save My Shares</span>
-                <span id="saveSharesBtnBadge" class="bg-purple-950/70 border border-purple-300/40 text-xs px-2.5 py-1 rounded-lg text-white font-extrabold">₹0.00</span>
+              <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-3 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
+                <span>Save Shares</span>
+                <span id="saveSharesBtnBadge" class="bg-purple-950/70 border border-purple-300/40 text-xs px-2 py-0.5 rounded-lg text-white font-extrabold">₹0.00</span>
+              </button>
+              <button id="stickyPayNowBtn" onclick="payCalculatedTotalNow()" class="hidden flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white py-3 px-3.5 rounded-xl font-bold text-xs sm:text-sm shadow-xl active:scale-[0.98] transition">
+                <span>⚡ Pay Now</span>
               </button>
             </div>
           </div>
@@ -1284,6 +1293,79 @@
       document.getElementById('personalEstimatedTotal').innerText = formatted;
       document.getElementById('personalSelectedCount').innerText = count;
       document.getElementById('saveSharesBtnBadge').innerText = formatted;
+
+      const calcPayBtn = document.getElementById('payCalculatedShareBtn');
+      const stickyPayBtn = document.getElementById('stickyPayNowBtn');
+      if (total > 0) {
+        if (calcPayBtn) {
+          calcPayBtn.classList.remove('hidden');
+          calcPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
+        }
+        if (stickyPayBtn) {
+          stickyPayBtn.classList.remove('hidden');
+          stickyPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
+        }
+      } else {
+        if (calcPayBtn) calcPayBtn.classList.add('hidden');
+        if (stickyPayBtn) stickyPayBtn.classList.add('hidden');
+      }
+    }
+
+    async function payCalculatedTotalNow() {
+      let total = 0;
+      currentReceiptItems.forEach(item => {
+        const s = itemSharesState[item.id];
+        if (s && s.fraction > 0) {
+          total += item.price * s.fraction;
+        }
+      });
+
+      if (total <= 0) {
+        return showToast('Please select at least one item portion first', 'error');
+      }
+
+      // If activeReceiptData is missing or missing uploader_upi_id, attempt to fetch fresh details
+      if (!activeReceiptData || !activeReceiptData.uploader_upi_id) {
+        try {
+          const recRes = await fetch(`${API_BASE}/receipts/${activeReceiptId}`);
+          if (recRes.ok) {
+            activeReceiptData = await recRes.json();
+          }
+        } catch (e) {}
+      }
+
+      const hostUpi = activeReceiptData?.uploader_upi_id || (currentUser && currentUser.id === activeReceiptData?.uploader_id ? currentUser.upi_id : null);
+      const hostName = activeReceiptData?.uploader_name || 'Receipt Host';
+      const storeName = activeReceiptData?.store_name || 'Bill';
+
+      if (!hostUpi) {
+        if (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id) {
+          switchTab('profile');
+          showToast('Please set your UPI ID in Profile so friends can pay you!', 'error');
+        } else {
+          showToast('The host has not set up their UPI ID yet.', 'error');
+        }
+        return;
+      }
+
+      // Auto save shares in background so calculations are preserved
+      if (currentUser) {
+        submitPersonalShares().catch(() => {});
+      }
+
+      // Construct UPI Deeplink URI
+      const formattedAmount = total.toFixed(2);
+      const note = `Split for ${storeName} (#${activeReceiptId})`;
+      const upiDeepLink = `upi://pay?pa=${encodeURIComponent(hostUpi)}&pn=${encodeURIComponent(hostName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Direct Deeplink trigger for UPI Apps (GPay, PhonePe, Paytm, Cred, etc.)
+        window.location.href = upiDeepLink;
+      } else {
+        // Desktop / Laptop Fallback to QR Scanner Modal
+        openUpiQrModal(hostUpi, hostName, total);
+      }
     }
 
     async function submitPersonalShares() {
