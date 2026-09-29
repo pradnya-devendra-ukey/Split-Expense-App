@@ -296,54 +296,6 @@
             </div>
           </div>
 
-          <!-- ================= PROMINENT SHARE & INSTALL APP SECTION ================= -->
-          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 border-2 border-purple-500/30 shadow-xl mb-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30">
-                  📱
-                </div>
-                <div>
-                  <h3 class="text-base font-extrabold" style="color: var(--text-heading);">Share & Install Mobile App</h3>
-                  <p class="text-xs" style="color: var(--text-sub);">Send the app link to friends so they can install & join splits.</p>
-                </div>
-              </div>
-              <button id="pwaInstallBtn" onclick="installPwaDirect()" class="hidden bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 transition shadow-md">
-                ⬇️ Install App
-              </button>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              <button onclick="shareViaWhatsApp()" class="flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 px-4 rounded-2xl text-xs font-bold hover:brightness-110 transition shadow-md shadow-green-900/20 active:scale-[0.99]">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.158.572 4.183 1.572 5.932l-1.665 6.084 6.223-1.633c1.677.915 3.597 1.431 5.637 1.431 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/></svg>
-                Share via WhatsApp
-              </button>
-
-              <button onclick="shareAppUrl()" class="flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-4 rounded-2xl text-xs font-bold active:scale-[0.99]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                Share App Link
-              </button>
-            </div>
-
-            <!-- Copy Link & Guide Box -->
-            <div class="flex items-center justify-between gap-2 p-3 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
-              <div class="truncate text-xs font-mono" style="color: var(--text-sub);" id="appLinkTextDisplay">
-                https://split-expense-app-qhu3.onrender.com
-              </div>
-              <button onclick="copyAppUrl()" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition shrink-0" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
-                Copy
-              </button>
-            </div>
-
-            <!-- Install Tips for Mobile -->
-            <div class="p-3 rounded-2xl border text-[11px] space-y-1.5" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
-              <p class="font-bold text-xs" style="color: var(--text-heading);">📲 How friends can install this on phone:</p>
-              <p>• <b>Android (Chrome):</b> Open link ➔ Tap <b>⋮</b> (Top Right) ➔ Tap <b>Install app</b> / <b>Add to Home Screen</b>.</p>
-              <p>• <b>iPhone (Safari):</b> Open link ➔ Tap <b>Share</b> (⎋) ➔ Tap <b>Add to Home Screen</b>.</p>
-            </div>
-          </div>
-
         </div>
 
         <!-- ================= UPLOAD SECTION ================= -->
@@ -576,19 +528,6 @@
             </div>
           </div>
 
-          <!-- Share App Box inside Profile -->
-          <div class="p-4 rounded-2xl border space-y-3" style="background: var(--bg-sub); border-color: var(--border-sub);">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-bold" style="color: var(--text-heading);">Share App with Group</p>
-                <p class="text-[11px]" style="color: var(--text-sub);">Invite friends or family to join splits</p>
-              </div>
-              <button onclick="shareAppUrl()" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
-                Share 🚀
-              </button>
-            </div>
-          </div>
-
           <div class="pt-2 border-t" style="border-color: var(--border-sub);">
             <button onclick="logoutUser()" class="w-full py-3 bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm rounded-xl hover:bg-red-500/20 transition">
               Log Out
@@ -702,27 +641,6 @@
     let deferredPrompt = null;
     let currentQrUpiLink = '';
 
-    // --- PWA INSTALL CAPTURE ---
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      const btn = document.getElementById('pwaInstallBtn');
-      if (btn) btn.classList.remove('hidden');
-    });
-
-    async function installPwaDirect() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          showToast('App installed successfully!');
-        }
-        deferredPrompt = null;
-      } else {
-        showToast('To install: Tap browser menu (⋮) -> Install App / Add to Home Screen');
-      }
-    }
-
     // --- THEME MANAGEMENT ---
     function applyTheme(theme) {
       currentTheme = theme;
@@ -759,9 +677,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme(currentTheme);
       checkAuthState();
-      
-      const linkDisplay = document.getElementById('appLinkTextDisplay');
-      if (linkDisplay) linkDisplay.innerText = window.location.origin;
 
       if (receiptParam && currentUser) {
         loadReceiptForJoining(parseInt(receiptParam));
@@ -1296,7 +1211,12 @@
 
       const calcPayBtn = document.getElementById('payCalculatedShareBtn');
       const stickyPayBtn = document.getElementById('stickyPayNowBtn');
-      if (total > 0) {
+
+      // Check if current user is the host/creator of the active receipt
+      const isHost = (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id);
+
+      // Only show Pay Now button if total > 0 AND the user is NOT the host
+      if (total > 0 && !isHost) {
         if (calcPayBtn) {
           calcPayBtn.classList.remove('hidden');
           calcPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
@@ -1312,6 +1232,11 @@
     }
 
     async function payCalculatedTotalNow() {
+      // Check if user is host
+      if (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id) {
+        return showToast('You are the host who paid the bill! Other participants will pay to your UPI.', 'error');
+      }
+
       let total = 0;
       currentReceiptItems.forEach(item => {
         const s = itemSharesState[item.id];
@@ -1339,12 +1264,7 @@
       const storeName = activeReceiptData?.store_name || 'Bill';
 
       if (!hostUpi) {
-        if (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id) {
-          switchTab('profile');
-          showToast('Please set your UPI ID in Profile so friends can pay you!', 'error');
-        } else {
-          showToast('The host has not set up their UPI ID yet.', 'error');
-        }
+        showToast('The host has not set up their UPI ID yet.', 'error');
         return;
       }
 
@@ -1457,13 +1377,15 @@
 
         const hostUpi = receiptData.uploader_upi_id || (currentUser && currentUser.id === receiptData.uploader_id ? currentUser.upi_id : null);
         const hostName = receiptData.uploader_name || 'Host';
+        const isCurrentUserHost = (currentUser && receiptData.uploader_id && currentUser.id === receiptData.uploader_id);
 
         data.forEach(row => {
           const div = document.createElement('div');
           div.className = 'p-3.5 flex flex-col gap-2';
           
           const isPaid = getPaymentStatus(receiptId, row.user_id);
-          const isHost = (receiptData.uploader_id && row.user_id === receiptData.uploader_id);
+          const isHostRow = (receiptData.uploader_id && row.user_id === receiptData.uploader_id);
+          const isMyRow = (currentUser && currentUser.id === row.user_id);
 
           let itemsHtml = (row.items && row.items.length > 0)
             ? row.items.map(i => `
@@ -1477,36 +1399,55 @@
           // UPI & Settlement Action Bar for each participant
           let paymentActionHtml = '';
           if (row.total_owed > 0) {
-            const statusBadge = isPaid 
-              ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅</button>`
-              : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
-
-            let upiButtons = '';
-            if (hostUpi) {
-              upiButtons = `
-                <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1">
-                  ⚡ Pay ₹${row.total_owed.toFixed(2)} (UPI)
-                </button>
+            if (isHostRow) {
+              // Host already paid the bill at the restaurant/store
+              paymentActionHtml = `
+                <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 px-2.5 py-1 rounded-lg">Host (Paid Original Bill) 🧾</span>
+                  </div>
+                </div>
               `;
             } else {
-              upiButtons = `
-                <button onclick="promptHostUpi()" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-purple-300 border-purple-500/30" style="background: var(--bg-chip);">
-                  Set Host UPI
-                </button>
+              // Participant row who owes money to the host
+              const statusBadge = isPaid 
+                ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅</button>`
+                : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
+
+              let upiAction = '';
+              // Non-host participant viewing their own row pays the host
+              if (isMyRow && !isCurrentUserHost) {
+                if (hostUpi) {
+                  upiAction = `
+                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1">
+                      ⚡ Pay Host ₹${row.total_owed.toFixed(2)} (UPI)
+                    </button>
+                  `;
+                } else {
+                  upiAction = `<span class="text-[10px] text-purple-300">Host UPI not set</span>`;
+                }
+              } else if (isCurrentUserHost) {
+                // Host viewing friend's row can show QR for friend to scan
+                if (hostUpi) {
+                  upiAction = `
+                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-purple-300 border-purple-500/30 hover:bg-purple-900/30 flex items-center gap-1" style="background: var(--bg-chip);">
+                      Show QR
+                    </button>
+                  `;
+                }
+              }
+
+              paymentActionHtml = `
+                <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
+                  <div class="flex items-center gap-1.5">
+                    ${statusBadge}
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    ${upiAction}
+                  </div>
+                </div>
               `;
             }
-
-            paymentActionHtml = `
-              <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
-                <div class="flex items-center gap-1.5">
-                  ${statusBadge}
-                  ${isHost ? '<span class="text-[10px] font-bold text-purple-400 bg-purple-950/60 border border-purple-500/30 px-1.5 py-0.5 rounded">Host/Paid</span>' : ''}
-                </div>
-                <div class="flex items-center gap-1.5">
-                  ${upiButtons}
-                </div>
-              </div>
-            `;
           }
 
           div.innerHTML = `
@@ -1671,37 +1612,10 @@
       }
     }
 
-    // --- SHARING HELPERS ---
+    // --- ACTIVE RECEIPT SHARING HELPERS ---
     function getShareableAppUrl(receiptId = null) {
       const base = window.location.origin;
       return receiptId ? `${base}/?receipt_id=${receiptId}` : base;
-    }
-
-    async function shareViaWhatsApp() {
-      const url = getShareableAppUrl();
-      const message = encodeURIComponent(`Hey! Use SplitExpense to split restaurant bills & receipts with custom shares instantly:\n${url}`);
-      window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
-    }
-
-    async function shareAppUrl() {
-      const url = getShareableAppUrl();
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'SplitExpense App',
-            text: 'Split bills and receipts with custom shares instantly on mobile:',
-            url: url
-          });
-        } catch(e) {}
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast('App link copied to clipboard!');
-      }
-    }
-
-    async function copyAppUrl() {
-      await navigator.clipboard.writeText(getShareableAppUrl());
-      showToast('App link copied to clipboard!');
     }
 
     async function shareDirectReceiptLink() {
