@@ -408,51 +408,51 @@
         <!-- ================= UNIFIED ACTIVE BILL VIEW (CLEAN & NON-CLUTTERED) ================= -->
         <section id="activeBillView" class="hidden space-y-4 animate-fade pb-20">
           
-          <!-- 1. Unified Receipt Header Card -->
-          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 shadow-xl">
-            <!-- Top Row: Back, Store Title, Code Badge, Total -->
-            <div class="flex items-start justify-between gap-3 border-b pb-4" style="border-color: var(--border-sub);">
-              <div class="space-y-1">
-                <button onclick="exitActiveBillView()" class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-400 hover:underline mb-1">
+          <!-- 1. Compact Receipt Header Card -->
+          <div class="app-card p-3.5 sm:p-4 rounded-2xl space-y-2.5 shadow-lg">
+            <!-- Top Row: Back link, Store Title, Code Badge, Total Pill -->
+            <div class="flex items-center justify-between gap-2 border-b pb-2.5" style="border-color: var(--border-sub);">
+              <div class="min-w-0 flex-1">
+                <button onclick="exitActiveBillView()" class="inline-flex items-center gap-1 text-[10px] font-bold text-purple-400 hover:underline mb-0.5">
                   ← Back to Home
                 </button>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black" style="color: var(--text-heading);">Store Receipt</h2>
-                  <div onclick="copyDirectReceiptLink()" class="cursor-pointer flex items-center gap-1 px-2.5 py-0.5 rounded-lg border font-mono font-black text-xs text-purple-300 hover:brightness-110 transition shadow-inner" style="background: var(--bg-chip); border-color: var(--border-glow);" title="Click to copy join code">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h2 id="receiptStoreTitle" class="text-base sm:text-lg font-black truncate max-w-[200px] sm:max-w-xs" style="color: var(--text-heading);">Store Receipt</h2>
+                  <div onclick="copyDirectReceiptLink()" class="cursor-pointer flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-bold text-[10px] text-purple-300 hover:brightness-110 transition shadow-inner" style="background: var(--bg-chip); border-color: var(--border-glow);" title="Click to copy join code">
                     <span id="receiptCodeBadge">#2BG27K</span>
-                    <span class="text-[10px] opacity-70">📋</span>
+                    <span class="text-[9px] opacity-70">📋</span>
                   </div>
                 </div>
               </div>
 
               <!-- Grand Total Pill -->
-              <div class="px-4 py-2 rounded-2xl border text-right shrink-0" style="background: var(--bg-sub); border-color: var(--border-sub);">
-                <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Bill</p>
-                <p id="receiptGrandTotal" class="text-xl font-black text-purple-400">₹0.00</p>
+              <div class="px-2.5 py-1 rounded-xl border text-right shrink-0" style="background: var(--bg-sub); border-color: var(--border-sub);">
+                <p class="text-[8px] uppercase font-bold tracking-wider" style="color: var(--text-dim);">Total Bill</p>
+                <p id="receiptGrandTotal" class="text-base sm:text-lg font-black text-purple-400 leading-tight">₹0.00</p>
               </div>
             </div>
 
             <!-- Second Row: Upfront Payers Banner -->
-            <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
-              <div class="flex items-center gap-2 truncate">
+            <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-[11px]" style="background: var(--bg-sub); border-color: var(--border-sub);">
+              <div class="flex items-center gap-1.5 truncate">
                 <span class="text-purple-400 font-bold shrink-0">💳 Paid Upfront:</span>
-                <span id="itemsPayerSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Host</span>
+                <span id="itemsPayerSummaryText" class="font-semibold truncate" style="color: var(--text-heading);">Host</span>
               </div>
-              <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 px-2.5 py-1 rounded-xl border text-[11px] font-bold text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
-                <span>Manage Payers</span> ⚙️
+              <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 px-2 py-0.5 rounded-lg border text-[10px] font-bold text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+                <span>Manage</span> ⚙️
               </button>
             </div>
 
             <!-- Third Row: Quick Actions (WhatsApp, Copy, Print) -->
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-              <button onclick="shareOnWhatsApp()" class="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md transition">
-                <span>💬 WhatsApp Share</span>
+            <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+              <button onclick="shareOnWhatsApp()" class="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1.5 rounded-xl font-bold text-[11px] shadow-sm transition">
+                <span>💬 WhatsApp</span>
               </button>
-              <button onclick="copyFormattedReceiptText()" class="px-3 py-2 rounded-xl font-bold text-xs border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
-                📋 Copy Text
+              <button onclick="copyFormattedReceiptText()" class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl font-bold text-[11px] border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                <span>📋 Copy</span>
               </button>
-              <button onclick="printOrExportReceipt()" class="px-3 py-2 rounded-xl font-bold text-xs border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
-                🖨️ PDF / Print
+              <button onclick="printOrExportReceipt()" class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl font-bold text-[11px] border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                <span>🖨️ Print</span>
               </button>
             </div>
           </div>
