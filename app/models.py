@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(100), unique=True, nullable=True, index=True)
     password_hash = Column(String(255), nullable=True)
     upi_id = Column(String(100), nullable=True)
+    phone = Column(String(50), nullable=True)
     default_currency = Column(String(10), default="INR")
     created_at = Column(DateTime, default=datetime.utcnow)
 

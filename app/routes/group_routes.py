@@ -136,6 +136,49 @@ def add_group_member(group_id: int, payload: schemas.AddGroupMemberRequest, db: 
 
     return format_group_response(group, db)
 
+@router.post("/{group_id}/members/bulk", response_model=schemas.GroupResponse)
+def add_group_members_bulk(group_id: int, payload: schemas.BulkAddGroupMembersRequest, db: Session = Depends(get_db)):
+    """Add multiple members to group from user IDs or contact names."""
+    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Add by user_ids
+    for uid in (payload.user_ids or []):
+        u = db.query(models.User).filter(models.User.id == uid).first()
+        if u:
+            existing = db.query(models.GroupMember).filter(
+                models.GroupMember.group_id == group_id,
+                models.GroupMember.user_id == uid
+            ).first()
+            if not existing:
+                db.add(models.GroupMember(group_id=group_id, user_id=uid))
+
+    # Add by contact names
+    import uuid
+    for name in (payload.contact_names or []):
+        clean_name = name.strip()
+        if not clean_name:
+            continue
+        u = db.query(models.User).filter(models.User.name.ilike(clean_name)).first()
+        if not u:
+            dummy_email = f"{uuid.uuid4().hex[:8]}@contacts.local"
+            u = models.User(name=clean_name, email=dummy_email)
+            db.add(u)
+            db.commit()
+            db.refresh(u)
+
+        existing = db.query(models.GroupMember).filter(
+            models.GroupMember.group_id == group_id,
+            models.GroupMember.user_id == u.id
+        ).first()
+        if not existing:
+            db.add(models.GroupMember(group_id=group_id, user_id=u.id))
+
+    db.commit()
+    db.refresh(group)
+    return format_group_response(group, db)
+
 @router.post("/{group_id}/receipts/{receipt_id}", response_model=schemas.GroupResponse)
 def link_receipt_to_group(group_id: int, receipt_id: int, db: Session = Depends(get_db)):
     """Link an existing receipt to a group/trip."""

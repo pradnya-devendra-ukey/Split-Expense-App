@@ -3,10 +3,27 @@ from typing import List, Optional
 
 class UserCreate(BaseModel):
     name: str
-    email: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    upi_id: Optional[str] = None
 
-class UserResponse(UserCreate):
+class UserBulkCreate(BaseModel):
+    names: List[str]
+
+class ContactImportItem(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    upi_id: Optional[str] = None
+
+class ContactImportRequest(BaseModel):
+    contacts: List[ContactImportItem]
+
+class UserResponse(BaseModel):
     id: int
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
     upi_id: Optional[str] = None
     default_currency: Optional[str] = "INR"
     class Config:
@@ -235,6 +252,11 @@ class GroupResponse(BaseModel):
 
 class AddGroupMemberRequest(BaseModel):
     user_id: int
+
+class BulkAddGroupMembersRequest(BaseModel):
+    user_ids: Optional[List[int]] = []
+    contact_names: Optional[List[str]] = []
+
 
 class GroupSummaryResponse(BaseModel):
     group_id: int

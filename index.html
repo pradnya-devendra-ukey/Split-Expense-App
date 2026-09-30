@@ -615,6 +615,35 @@
                   Show QR
                 </button>
               </div>
+          <!-- MY CONTACTS & SPLIT BUDDIES CARD -->
+          <div class="p-5 rounded-3xl border-2 space-y-4 shadow-lg" style="background: var(--bg-sub); border-color: var(--border-sub);">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-base shadow-sm">
+                  📇
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold" style="color: var(--text-heading);">My Contacts & Split Buddies</h4>
+                  <p class="text-[11px]" style="color: var(--text-sub);">Quickly add friends to split bills & trips</p>
+                </div>
+              </div>
+              <span id="profileContactsCountBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-purple-950/60 text-purple-300 border-purple-500/40">
+                0 Friends
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="pickPhoneContactsForProfile()" class="flex-1 py-2.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold hover:brightness-125 transition flex items-center justify-center gap-1.5">
+                <span>📱 Sync Phone Contacts</span>
+              </button>
+              <button type="button" onclick="openQuickAddContactModal('profile')" class="py-2.5 px-3.5 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:brightness-125 transition flex items-center justify-center gap-1.5">
+                <span>➕ Add Friend</span>
+              </button>
+            </div>
+
+            <!-- Contacts List in Profile -->
+            <div id="profileContactsList" class="space-y-2 max-h-48 overflow-y-auto p-2 rounded-2xl border" style="background: var(--bg-chip); border-color: var(--border-sub);">
+              <p class="text-xs text-center py-2" style="color: var(--text-sub);">Loading contacts...</p>
             </div>
           </div>
 
@@ -755,8 +784,19 @@
         </div>
 
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Select Group Members</label>
-          <div id="groupMembersChecklist" class="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl border" style="background: var(--bg-sub); border-color: var(--border-sub);"></div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Select Trip Members</label>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="pickPhoneContactsForGroup()" class="px-2 py-1 rounded-lg bg-purple-600/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold hover:brightness-125 transition flex items-center gap-1">
+                <span>📱 Phone Contacts</span>
+              </button>
+              <button type="button" onclick="openQuickAddContactModal('group')" class="px-2 py-1 rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold hover:brightness-125 transition flex items-center gap-1">
+                <span>+ Add Friend</span>
+              </button>
+            </div>
+          </div>
+          <input type="text" id="groupMemberSearchInput" oninput="filterGroupMembersChecklist(this.value)" placeholder="🔍 Search contacts & friends..." class="w-full p-2 mb-1.5 theme-input rounded-xl text-xs outline-none border" />
+          <div id="groupMembersChecklist" class="max-h-40 overflow-y-auto space-y-1.5 p-2 rounded-xl border" style="background: var(--bg-sub); border-color: var(--border-sub);"></div>
         </div>
 
         <div class="space-y-2 pt-1">
@@ -807,6 +847,22 @@
         </button>
       </div>
 
+      <!-- Trip Members & Contacts Section -->
+      <div class="space-y-2 pt-2 border-t" style="border-color: var(--border-sub);">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">👥 Trip Members & Buddies</h4>
+          <div class="flex items-center gap-1.5">
+            <button onclick="pickPhoneContactsForActiveGroup()" class="px-2 py-1 rounded-lg bg-purple-600/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold hover:brightness-125 transition flex items-center gap-1">
+              <span>📱 Add from Contacts</span>
+            </button>
+            <button onclick="openQuickAddContactModal('activeGroup')" class="px-2 py-1 rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold hover:brightness-125 transition flex items-center gap-1">
+              <span>+ Add Friend</span>
+            </button>
+          </div>
+        </div>
+        <div id="groupMembersListContainer" class="flex flex-wrap gap-2 p-2.5 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);"></div>
+      </div>
+
       <!-- Receipts in Group -->
       <div class="space-y-2">
         <h4 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Receipts in this Trip</h4>
@@ -821,6 +877,44 @@
         </div>
         <div id="groupConsolidatedTransfersContainer" class="space-y-2"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= QUICK ADD FRIEND / CONTACT MODAL ================= -->
+  <div id="quickAddContactModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📇</span>
+          <h3 class="text-base font-bold" style="color: var(--text-heading);">Add Friend / Contact</h3>
+        </div>
+        <button onclick="closeQuickAddContactModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <form onsubmit="handleQuickAddContactSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Friend Name(s)</label>
+          <input type="text" id="quickContactNameInput" required placeholder="e.g. Rahul Sharma or Rahul, Priya, Amit" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+          <p class="text-[10px] mt-1" style="color: var(--text-dim);">Tip: You can comma-separate multiple friends to add together!</p>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Phone Number (Optional)</label>
+          <input type="tel" id="quickContactPhoneInput" placeholder="e.g. +91 98765 43210" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">UPI ID (Optional - for 1-tap settlements)</label>
+          <input type="text" id="quickContactUpiInput" placeholder="e.g. rahul@okaxis, friend@paytm" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button type="submit" id="saveQuickContactBtn" class="w-full py-2.5 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
+            Save & Add Friend 👥
+          </button>
+          <button type="button" onclick="closeQuickAddContactModal()" class="w-full py-2 border rounded-xl text-xs font-bold" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1469,6 +1563,8 @@
         loadUserHistory();
       } else if (tab === 'groups') {
         loadUserGroups();
+      } else if (tab === 'profile') {
+        loadProfileContacts();
       }
     }
 
@@ -2269,30 +2365,261 @@
       });
     }
 
-    async function openCreateGroupModal() {
-      document.getElementById('groupNameInput').value = '';
-      document.getElementById('groupDescInput').value = '';
-      document.getElementById('groupCurrencyInput').value = currentCurrency;
+    // --- CONTACTS & GROUP MANAGEMENT ---
+    let allCachedUsers = [];
+    let quickContactContext = 'group'; // 'group' | 'activeGroup' | 'profile'
 
+    async function reloadGroupMembersChecklist(preselectedIds = []) {
       const listEl = document.getElementById('groupMembersChecklist');
-      listEl.innerHTML = '<div class="text-xs">Loading members...</div>';
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="text-xs p-2 text-center" style="color: var(--text-sub);">Loading contacts...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/users/`);
+        allCachedUsers = await res.json();
+        listEl.innerHTML = '';
+
+        if (!allCachedUsers || allCachedUsers.length === 0) {
+          listEl.innerHTML = '<div class="text-xs p-2 text-center" style="color: var(--text-sub);">No contacts found. Tap "+ Add Friend" or "📱 Phone Contacts".</div>';
+          return;
+        }
+
+        allCachedUsers.forEach(u => {
+          if (u.id === currentUser?.id) return;
+          const isChecked = preselectedIds.includes(u.id);
+          const label = document.createElement('label');
+          label.className = 'group-member-item flex items-center justify-between gap-2 text-xs font-semibold cursor-pointer p-2 rounded-xl border transition hover:brightness-110';
+          label.style.background = 'var(--bg-chip)';
+          label.style.borderColor = 'var(--border-sub)';
+          label.dataset.name = (u.name || '').toLowerCase();
+          label.dataset.phone = (u.phone || '').toLowerCase();
+
+          label.innerHTML = `
+            <div class="flex items-center gap-2.5 truncate">
+              <input type="checkbox" value="${u.id}" ${isChecked ? 'checked' : ''} class="group-member-checkbox rounded border-purple-500 text-purple-600 focus:ring-0 w-4 h-4" />
+              <div class="truncate">
+                <span class="font-bold truncate" style="color: var(--text-heading);">${u.name}</span>
+                ${u.phone ? `<p class="text-[10px] font-mono truncate" style="color: var(--text-dim);">${u.phone}</p>` : ''}
+              </div>
+            </div>
+            ${u.upi_id ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-bold shrink-0">UPI</span>' : ''}
+          `;
+          listEl.appendChild(label);
+        });
+      } catch (e) {
+        listEl.innerHTML = '<div class="text-xs p-2 text-center text-red-400">Could not load contacts.</div>';
+      }
+    }
+
+    function filterGroupMembersChecklist(q) {
+      const filter = (q || '').trim().toLowerCase();
+      const items = document.querySelectorAll('.group-member-item');
+      items.forEach(it => {
+        const name = it.dataset.name || '';
+        const phone = it.dataset.phone || '';
+        if (!filter || name.includes(filter) || phone.includes(filter)) {
+          it.style.display = 'flex';
+        } else {
+          it.style.display = 'none';
+        }
+      });
+    }
+
+    // --- CONTACT PICKER & IMPORT INTEGRATION ---
+    async function pickPhoneContacts(onContactsPicked) {
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        try {
+          const props = ['name', 'tel', 'email'];
+          const opts = { multiple: true };
+          const rawContacts = await navigator.contacts.select(props, opts);
+          if (rawContacts && rawContacts.length > 0) {
+            showToast(`Importing ${rawContacts.length} contact(s)... 📱`);
+            const payloadContacts = rawContacts.map(c => ({
+              name: (c.name && c.name[0]) || (c.tel && c.tel[0]) || 'Friend',
+              phone: (c.tel && c.tel[0]) || null,
+              email: (c.email && c.email[0]) || null,
+              upi_id: null
+            }));
+
+            const res = await fetch(`${API_BASE}/users/contacts/import`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contacts: payloadContacts })
+            });
+            const importedUsers = await res.json();
+            if (res.ok) {
+              showToast(`Imported ${importedUsers.length} friend(s) from contacts! 🎉`);
+              if (onContactsPicked) await onContactsPicked(importedUsers);
+            } else {
+              throw new Error(importedUsers.detail || 'Could not import contacts');
+            }
+            return importedUsers;
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            showToast(`Contact Picker: ${err.message}`, 'error');
+          }
+        }
+      } else {
+        showToast('Opening Quick Add Contact / Friend modal! 📇', 'info');
+        openQuickAddContactModal(quickContactContext);
+      }
+    }
+
+    async function pickPhoneContactsForGroup() {
+      quickContactContext = 'group';
+      await pickPhoneContacts(async (importedUsers) => {
+        const importedIds = importedUsers.map(u => u.id);
+        const currentChecked = Array.from(document.querySelectorAll('.group-member-checkbox:checked')).map(cb => parseInt(cb.value));
+        const allSelected = Array.from(new Set([...currentChecked, ...importedIds]));
+        await reloadGroupMembersChecklist(allSelected);
+      });
+    }
+
+    async function pickPhoneContactsForActiveGroup() {
+      if (!activeGroupId) return;
+      quickContactContext = 'activeGroup';
+      await pickPhoneContacts(async (importedUsers) => {
+        try {
+          const userIds = importedUsers.map(u => u.id);
+          const res = await fetch(`${API_BASE}/groups/${activeGroupId}/members/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_ids: userIds })
+          });
+          if (res.ok) {
+            showToast('Contacts added to trip! 🏖️');
+            openGroupDetails(activeGroupId);
+          }
+        } catch(e) {}
+      });
+    }
+
+    async function pickPhoneContactsForProfile() {
+      quickContactContext = 'profile';
+      await pickPhoneContacts(async () => {
+        loadProfileContacts();
+      });
+    }
+
+    function openQuickAddContactModal(context = 'group') {
+      quickContactContext = context;
+      document.getElementById('quickContactNameInput').value = '';
+      document.getElementById('quickContactPhoneInput').value = '';
+      document.getElementById('quickContactUpiInput').value = '';
+      document.getElementById('quickAddContactModal').classList.remove('hidden');
+    }
+
+    function closeQuickAddContactModal() {
+      document.getElementById('quickAddContactModal').classList.add('hidden');
+    }
+
+    async function handleQuickAddContactSubmit(e) {
+      e.preventDefault();
+      const rawNames = document.getElementById('quickContactNameInput').value.trim();
+      const phone = document.getElementById('quickContactPhoneInput').value.trim() || null;
+      const upi = document.getElementById('quickContactUpiInput').value.trim() || null;
+
+      if (!rawNames) return;
+
+      const names = rawNames.split(',').map(n => n.trim()).filter(Boolean);
+      const contactsPayload = names.map((name, idx) => ({
+        name: name,
+        phone: idx === 0 ? phone : null,
+        upi_id: idx === 0 ? upi : null
+      }));
+
+      const saveBtn = document.getElementById('saveQuickContactBtn');
+      saveBtn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/users/contacts/import`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contacts: contactsPayload })
+        });
+        const createdUsers = await res.json();
+        if (!res.ok) throw new Error(createdUsers.detail || 'Could not add friend');
+
+        closeQuickAddContactModal();
+        showToast(`Added ${createdUsers.length} friend(s) to contacts! 👥`);
+
+        if (quickContactContext === 'group') {
+          const newIds = createdUsers.map(u => u.id);
+          const currentChecked = Array.from(document.querySelectorAll('.group-member-checkbox:checked')).map(cb => parseInt(cb.value));
+          const allSelected = Array.from(new Set([...currentChecked, ...newIds]));
+          await reloadGroupMembersChecklist(allSelected);
+        } else if (quickContactContext === 'activeGroup' && activeGroupId) {
+          const userIds = createdUsers.map(u => u.id);
+          await fetch(`${API_BASE}/groups/${activeGroupId}/members/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_ids: userIds })
+          });
+          openGroupDetails(activeGroupId);
+        } else if (quickContactContext === 'profile') {
+          loadProfileContacts();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    async function loadProfileContacts() {
+      const listEl = document.getElementById('profileContactsList');
+      const countBadge = document.getElementById('profileContactsCountBadge');
+      if (!listEl) return;
 
       try {
         const res = await fetch(`${API_BASE}/users/`);
         const users = await res.json();
-        listEl.innerHTML = '';
-        users.forEach(u => {
-          if (u.id === currentUser?.id) return;
-          const label = document.createElement('label');
-          label.className = 'flex items-center gap-2 text-xs font-semibold cursor-pointer p-1.5 rounded-lg hover:bg-purple-900/20';
-          label.innerHTML = `
-            <input type="checkbox" value="${u.id}" class="group-member-checkbox rounded border-purple-500 text-purple-600 focus:ring-0" />
-            <span style="color: var(--text-heading);">${u.name} ${u.upi_id ? '(UPI)' : ''}</span>
-          `;
-          listEl.appendChild(label);
-        });
-      } catch(e) {}
+        if (!res.ok) throw new Error(users.detail);
 
+        const contacts = users.filter(u => u.id !== currentUser?.id);
+        if (countBadge) countBadge.innerText = `${contacts.length} Friends`;
+
+        if (contacts.length === 0) {
+          listEl.innerHTML = '<div class="text-xs p-3 text-center" style="color: var(--text-sub);">No friends saved yet. Tap "Sync Phone Contacts" or "+ Add Friend" to start!</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        contacts.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'flex items-center justify-between p-2.5 rounded-xl border';
+          div.style.background = 'var(--bg-sub)';
+          div.style.borderColor = 'var(--border-sub)';
+          div.innerHTML = `
+            <div class="flex items-center gap-2.5 truncate">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                ${(c.name || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div class="truncate">
+                <p class="font-bold text-xs truncate" style="color: var(--text-heading);">${c.name}</p>
+                <p class="text-[10px] truncate font-mono" style="color: var(--text-dim);">${c.phone || c.email || 'Contact'}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${c.upi_id ? `<span class="text-[9px] px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-bold font-mono">${c.upi_id}</span>` : '<span class="text-[9px] text-zinc-400">No UPI</span>'}
+            </div>
+          `;
+          listEl.appendChild(div);
+        });
+      } catch (err) {
+        listEl.innerHTML = `<div class="text-xs text-center text-red-400 p-2">${err.message}</div>`;
+      }
+    }
+
+    async function openCreateGroupModal() {
+      document.getElementById('groupNameInput').value = '';
+      document.getElementById('groupDescInput').value = '';
+      document.getElementById('groupCurrencyInput').value = currentCurrency;
+      const searchInp = document.getElementById('groupMemberSearchInput');
+      if (searchInp) searchInp.value = '';
+
+      await reloadGroupMembersChecklist();
       document.getElementById('createGroupModal').classList.remove('hidden');
     }
 
@@ -2353,6 +2680,30 @@
         document.getElementById('groupModalSubtitle').innerText = `${group.description || 'Trip'} • Created ${group.created_at}`;
         document.getElementById('groupModalTotalSpend').innerText = `${sym}${group.total_spend.toFixed(2)}`;
         document.getElementById('groupModalReceiptCount').innerText = group.receipts.length;
+
+        // Render Trip Members & Buddies
+        const memList = document.getElementById('groupMembersListContainer');
+        if (memList) {
+          memList.innerHTML = '';
+          if (group.members && group.members.length > 0) {
+            group.members.forEach(m => {
+              const chip = document.createElement('div');
+              chip.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-semibold';
+              chip.style.background = 'var(--bg-chip)';
+              chip.style.borderColor = 'var(--border-sub)';
+              chip.innerHTML = `
+                <div class="w-4 h-4 rounded-full bg-purple-600 text-white flex items-center justify-center text-[9px] font-bold">
+                  ${(m.user_name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <span style="color: var(--text-heading);">${m.user_name}</span>
+                ${m.upi_id ? '<span class="text-[9px] text-emerald-400 font-bold">⚡</span>' : ''}
+              `;
+              memList.appendChild(chip);
+            });
+          } else {
+            memList.innerHTML = '<span class="text-xs p-1" style="color: var(--text-sub);">No members yet.</span>';
+          }
+        }
 
         const rList = document.getElementById('groupReceiptsListContainer');
         rList.innerHTML = '';

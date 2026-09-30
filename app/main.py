@@ -24,6 +24,8 @@ def migrate_db_columns():
                     conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
                 if "upi_id" not in cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN upi_id VARCHAR(100)"))
+                if "phone" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(50)"))
                 if "default_currency" not in cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN default_currency VARCHAR(10) DEFAULT 'INR'"))
                 if "created_at" not in cols:
@@ -57,6 +59,7 @@ def migrate_db_columns():
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(100);"))
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);"))
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS upi_id VARCHAR(100);"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);"))
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS default_currency VARCHAR(10) DEFAULT 'INR';"))
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
 
