@@ -433,15 +433,20 @@
 
           <!-- 2. Member Balances & Consumption Card (Live Breakdown) -->
           <div class="app-card p-3.5 sm:p-4 rounded-2xl space-y-2.5 shadow-lg">
-            <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-sub);">
-              <div class="flex items-center gap-1.5">
-                <span class="text-sm">👥</span>
-                <h3 class="font-bold text-xs sm:text-sm" style="color: var(--text-heading);">Member Balances & Consumption</h3>
+            <div class="flex items-center justify-between border-b pb-2 gap-2" style="border-color: var(--border-sub);">
+              <div class="flex items-center gap-1.5 truncate min-w-0">
+                <span class="text-sm shrink-0">👥</span>
+                <h3 class="font-bold text-xs sm:text-sm truncate" style="color: var(--text-heading);">Member Balances & Consumption</h3>
               </div>
-              <button onclick="fetchSummary(activeReceiptId, 'billMembersSummaryList')" class="text-[10px] font-bold flex items-center gap-1 border px-2 py-0.5 rounded-lg transition hover:brightness-110" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                <span>Refresh</span>
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="openAddBillMembersModal()" class="text-[10px] font-bold flex items-center gap-1 border px-2.5 py-1 rounded-xl transition hover:brightness-110 bg-purple-600 text-white border-purple-500 shadow-sm" title="Add members from contacts">
+                  <span>📱 + Add Contacts</span>
+                </button>
+                <button onclick="fetchSummary(activeReceiptId, 'billMembersSummaryList')" class="text-[10px] font-bold flex items-center gap-1 border px-2 py-1 rounded-xl transition hover:brightness-110" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
             <div id="billMembersSummaryList" class="space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
               <div class="text-[11px] text-center p-2" style="color: var(--text-sub);">Loading member balances...</div>
@@ -889,6 +894,50 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD MEMBERS FROM CONTACTS MODAL ================= -->
+  <div id="addBillMembersModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="app-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-base shadow-sm">
+            📇
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold" style="color: var(--text-heading);">Add Friends to Bill</h3>
+            <p class="text-[11px]" style="color: var(--text-sub);">Select contacts to split this expense</p>
+          </div>
+        </div>
+        <button onclick="closeAddBillMembersModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="pickPhoneContactsForBill()" class="flex-1 py-2.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold hover:brightness-125 transition flex items-center justify-center gap-1.5">
+            <span>📱 Sync Phone Contacts</span>
+          </button>
+          <button type="button" onclick="openQuickAddContactModal('bill')" class="py-2.5 px-3 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:brightness-125 transition flex items-center justify-center gap-1">
+            <span>+ Add Friend</span>
+          </button>
+        </div>
+
+        <input type="text" id="billMemberSearchInput" oninput="filterBillMembersChecklist(this.value)" placeholder="🔍 Search contacts & friends..." class="w-full p-2.5 theme-input rounded-xl text-xs outline-none border font-semibold" />
+
+        <div id="billMembersChecklist" class="max-h-48 overflow-y-auto space-y-1.5 p-2 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
+          <div class="text-xs p-3 text-center" style="color: var(--text-sub);">Loading contacts...</div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t" style="border-color: var(--border-sub);">
+          <button type="button" onclick="splitAllBillItemsEqually()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white rounded-xl font-bold text-xs shadow-lg flex items-center justify-center gap-1.5">
+            <span>⚡ Split All Items Equally with Selected</span>
+          </button>
+          <button type="button" onclick="addSelectedMembersToBillPayers()" class="w-full py-2.5 border rounded-xl text-xs font-bold transition hover:brightness-110 flex items-center justify-center gap-1.5" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
+            <span>💳 Add as Upfront Payers</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2552,6 +2601,11 @@
           const currentChecked = Array.from(document.querySelectorAll('.group-member-checkbox:checked')).map(cb => parseInt(cb.value));
           const allSelected = Array.from(new Set([...currentChecked, ...newIds]));
           await reloadGroupMembersChecklist(allSelected);
+        } else if (quickContactContext === 'bill') {
+          const newIds = createdUsers.map(u => u.id);
+          const currentChecked = Array.from(document.querySelectorAll('.bill-member-checkbox:checked')).map(cb => parseInt(cb.value));
+          const allSelected = Array.from(new Set([...currentChecked, ...newIds]));
+          await reloadBillMembersChecklist(allSelected);
         } else if (quickContactContext === 'activeGroup' && activeGroupId) {
           const userIds = createdUsers.map(u => u.id);
           await fetch(`${API_BASE}/groups/${activeGroupId}/members/bulk`, {
@@ -2613,6 +2667,132 @@
       } catch (err) {
         listEl.innerHTML = `<div class="text-xs text-center text-red-400 p-2">${err.message}</div>`;
       }
+    }
+
+    // --- BILL MEMBERS FROM CONTACTS MODAL ---
+    async function openAddBillMembersModal() {
+      if (!activeReceiptId) return showToast('No active bill loaded', 'error');
+      const searchInp = document.getElementById('billMemberSearchInput');
+      if (searchInp) searchInp.value = '';
+      await reloadBillMembersChecklist();
+      document.getElementById('addBillMembersModal').classList.remove('hidden');
+    }
+
+    function closeAddBillMembersModal() {
+      document.getElementById('addBillMembersModal').classList.add('hidden');
+    }
+
+    async function reloadBillMembersChecklist(preselectedIds = []) {
+      const listEl = document.getElementById('billMembersChecklist');
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="text-xs p-3 text-center" style="color: var(--text-sub);">Loading contacts...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/users/`);
+        allCachedUsers = await res.json();
+        listEl.innerHTML = '';
+
+        if (!allCachedUsers || allCachedUsers.length === 0) {
+          listEl.innerHTML = '<div class="text-xs p-3 text-center" style="color: var(--text-sub);">No contacts found. Tap "+ Add Friend" or "📱 Sync Phone Contacts".</div>';
+          return;
+        }
+
+        allCachedUsers.forEach(u => {
+          if (u.id === currentUser?.id) return;
+          const isChecked = preselectedIds.includes(u.id);
+          const label = document.createElement('label');
+          label.className = 'bill-member-item flex items-center justify-between gap-2 text-xs font-semibold cursor-pointer p-2.5 rounded-xl border transition hover:brightness-110';
+          label.style.background = 'var(--bg-chip)';
+          label.style.borderColor = 'var(--border-sub)';
+          label.dataset.name = (u.name || '').toLowerCase();
+          label.dataset.phone = (u.phone || '').toLowerCase();
+
+          label.innerHTML = `
+            <div class="flex items-center gap-2.5 truncate">
+              <input type="checkbox" value="${u.id}" ${isChecked ? 'checked' : ''} class="bill-member-checkbox rounded border-purple-500 text-purple-600 focus:ring-0 w-4 h-4" />
+              <div class="truncate">
+                <span class="font-bold truncate" style="color: var(--text-heading);">${u.name}</span>
+                ${u.phone ? `<p class="text-[10px] font-mono truncate" style="color: var(--text-dim);">${u.phone}</p>` : ''}
+              </div>
+            </div>
+            ${u.upi_id ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-bold shrink-0">UPI</span>' : ''}
+          `;
+          listEl.appendChild(label);
+        });
+      } catch (e) {
+        listEl.innerHTML = '<div class="text-xs p-3 text-center text-red-400">Could not load contacts.</div>';
+      }
+    }
+
+    function filterBillMembersChecklist(q) {
+      const filter = (q || '').trim().toLowerCase();
+      const items = document.querySelectorAll('.bill-member-item');
+      items.forEach(it => {
+        const name = it.dataset.name || '';
+        const phone = it.dataset.phone || '';
+        if (!filter || name.includes(filter) || phone.includes(filter)) {
+          it.style.display = 'flex';
+        } else {
+          it.style.display = 'none';
+        }
+      });
+    }
+
+    async function pickPhoneContactsForBill() {
+      quickContactContext = 'bill';
+      await pickPhoneContacts(async (importedUsers) => {
+        const importedIds = importedUsers.map(u => u.id);
+        const currentChecked = Array.from(document.querySelectorAll('.bill-member-checkbox:checked')).map(cb => parseInt(cb.value));
+        const allSelected = Array.from(new Set([...currentChecked, ...importedIds]));
+        await reloadBillMembersChecklist(allSelected);
+      });
+    }
+
+    async function splitAllBillItemsEqually() {
+      if (!activeReceiptId) return;
+      const checkedBoxes = document.querySelectorAll('.bill-member-checkbox:checked');
+      const memberIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+      const myId = currentUser ? currentUser.id : 1;
+      const allUserIds = Array.from(new Set([...memberIds, myId]));
+
+      if (currentReceiptItems.length === 0) {
+        return showToast('Please add items to this bill first', 'error');
+      }
+
+      if (allUserIds.length < 2) {
+        return showToast('Please check at least one friend to split with', 'error');
+      }
+
+      const assignments = currentReceiptItems.map(item => ({
+        item_id: item.id,
+        user_ids: allUserIds
+      }));
+
+      try {
+        const res = await fetch(`${API_BASE}/split/bulk-assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receipt_id: activeReceiptId,
+            assignments: assignments
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not assign shares');
+
+        closeAddBillMembersModal();
+        showToast(`Split bill equally across ${allUserIds.length} members! ⚡`);
+        if (typeof loadItems === 'function') loadItems(activeReceiptId);
+        fetchSummary(activeReceiptId, 'billMembersSummaryList');
+        fetchSummary(activeReceiptId, 'liveSummaryList', true);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function addSelectedMembersToBillPayers() {
+      closeAddBillMembersModal();
+      openManagePayersModal(activeReceiptId);
     }
 
     async function openCreateGroupModal() {
@@ -3209,6 +3389,15 @@
       }
     }
 
+    function getCurrencySym(curr) {
+      if (!curr) return '₹';
+      const c = curr.toString().toUpperCase().trim();
+      if (c === 'USD' || c === '$') return '$';
+      if (c === 'EUR' || c === '€') return '€';
+      if (c === 'GBP' || c === '£') return '£';
+      return '₹';
+    }
+
     // --- SUMMARY RENDERING WITH MULTI-PAYER & SMART TRANSFERS ---
     async function fetchSummary(receiptId, targetListId, isSilent = false) {
       if (!receiptId) return;
@@ -3252,7 +3441,18 @@
         if (mPayerEl) mPayerEl.innerText = payerText;
 
         if (users.length === 0 && transfers.length === 0) {
-          list.innerHTML = '<div class="p-4 text-center text-xs font-medium" style="color: var(--text-sub);">No participant shares assigned yet. Select items above and tap "Save Shares".</div>';
+          list.innerHTML = `
+            <div class="p-4 text-center rounded-2xl border border-dashed flex flex-col items-center gap-2.5 my-1" style="background: var(--bg-sub); border-color: var(--border-sub);">
+              <div class="w-8 h-8 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center text-sm font-bold">👥</div>
+              <div class="space-y-0.5">
+                <div class="text-xs font-bold" style="color: var(--text-heading);">No member shares calculated yet</div>
+                <div class="text-[10px]" style="color: var(--text-sub);">Assign item portions above or split equally with contacts.</div>
+              </div>
+              <button onclick="openAddBillMembersModal()" class="mt-0.5 px-3 py-1.5 rounded-xl text-xs font-bold lavender-glow-btn text-white flex items-center gap-1.5 shadow-md">
+                <span>📱 + Add Contacts to Bill</span>
+              </button>
+            </div>
+          `;
           return;
         }
 
@@ -3326,15 +3526,22 @@
           list.appendChild(transferContainer);
         }
 
-        // SECTION 2: PARTICIPANT BALANCES & CONSUMPTION
-        const balancesHeader = document.createElement('div');
-        balancesHeader.className = `flex items-center justify-between ${transfers.length > 0 ? 'pt-3 pb-1.5 border-t' : 'pb-1'} px-1`;
-        balancesHeader.style.borderColor = 'var(--border-sub)';
-        balancesHeader.innerHTML = `
-          <span class="text-xs font-bold" style="color: var(--text-sub);">👥 Member Balances & Consumption</span>
-          <span class="text-[10px] font-bold text-purple-400">Tap row for items</span>
-        `;
-        list.appendChild(balancesHeader);
+        // SECTION 2: PARTICIPANT BALANCES & CONSUMPTION (Show subtitled header only if transfers exist or inside modal)
+        if (transfers.length > 0 || targetId !== 'billMembersSummaryList') {
+          const balancesHeader = document.createElement('div');
+          balancesHeader.className = `flex items-center justify-between ${transfers.length > 0 ? 'pt-2.5 pb-1 border-t' : 'pb-1'} px-1`;
+          balancesHeader.style.borderColor = 'var(--border-sub)';
+          balancesHeader.innerHTML = `
+            <span class="text-xs font-bold" style="color: var(--text-sub);">${transfers.length > 0 ? '📊 Individual Shares' : '👥 Member Breakdown'}</span>
+            <span class="text-[10px] font-medium text-purple-400">Tap row for items</span>
+          `;
+          list.appendChild(balancesHeader);
+        } else {
+          const hint = document.createElement('div');
+          hint.className = 'flex items-center justify-end pb-1 px-1';
+          hint.innerHTML = `<span class="text-[10px] font-medium text-purple-400">Tap row for items</span>`;
+          list.appendChild(hint);
+        }
 
         users.forEach(row => {
           const div = document.createElement('div');
