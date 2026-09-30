@@ -3256,16 +3256,11 @@
           return;
         }
 
-        // SECTION 1: SMART SETTLEMENT TRANSFERS
-        const transferContainer = document.createElement('div');
-        transferContainer.className = 'space-y-2.5 pb-2';
+        // SECTION 1: SMART SETTLEMENT TRANSFERS (Only if active transfers exist)
+        if (transfers.length > 0) {
+          const transferContainer = document.createElement('div');
+          transferContainer.className = 'space-y-2.5 pb-2';
 
-        if (transfers.length === 0) {
-          const noDebtDiv = document.createElement('div');
-          noDebtDiv.className = 'p-3 rounded-2xl border text-center text-xs font-bold text-emerald-400 bg-emerald-950/30 border-emerald-500/30';
-          noDebtDiv.innerHTML = `🎉 All balances are perfectly settled! No money transfers needed.`;
-          transferContainer.appendChild(noDebtDiv);
-        } else {
           transfers.forEach(tr => {
             const trCard = document.createElement('div');
             trCard.className = 'p-3 rounded-2xl border space-y-2 shadow-sm';
@@ -3328,12 +3323,12 @@
             `;
             transferContainer.appendChild(trCard);
           });
+          list.appendChild(transferContainer);
         }
-        list.appendChild(transferContainer);
 
         // SECTION 2: PARTICIPANT BALANCES & CONSUMPTION
         const balancesHeader = document.createElement('div');
-        balancesHeader.className = 'flex items-center justify-between pt-3 pb-1.5 border-t px-1';
+        balancesHeader.className = `flex items-center justify-between ${transfers.length > 0 ? 'pt-3 pb-1.5 border-t' : 'pb-1'} px-1`;
         balancesHeader.style.borderColor = 'var(--border-sub)';
         balancesHeader.innerHTML = `
           <span class="text-xs font-bold" style="color: var(--text-sub);">👥 Member Balances & Consumption</span>
