@@ -1554,7 +1554,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        const rawText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (err) {
+          throw new Error(rawText || `Server error (${res.status})`);
+        }
         if (!res.ok) throw new Error(data.detail || 'Authentication failed');
 
         currentUser = data;
