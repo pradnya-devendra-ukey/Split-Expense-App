@@ -192,7 +192,6 @@
       <!-- Quick Actions Header (Theme, Currency, User Profile) -->
       <div class="flex items-center gap-2">
         <select id="globalCurrencySelect" onchange="changeGlobalCurrency(this.value)" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border outline-none cursor-pointer shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
-          <option value="INR">₹ INR</option>
           <option value="USD">$ USD</option>
           <option value="EUR">€ EUR</option>
           <option value="GBP">£ GBP</option>
@@ -362,7 +361,6 @@
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Currency</label>
                 <select id="uploadCurrencySelect" class="w-full p-3.5 theme-input rounded-xl font-bold text-sm outline-none border">
-                  <option value="INR">₹ INR (Indian Rupee)</option>
                   <option value="USD">$ USD (US Dollar)</option>
                   <option value="EUR">€ EUR (Euro)</option>
                   <option value="GBP">£ GBP (British Pound)</option>
@@ -372,6 +370,14 @@
                   <option value="AUD">A$ AUD (Australian Dollar)</option>
                 </select>
               </div>
+            </div>
+
+            <!-- Attach to Trip / Group Selection -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Attach to Trip / Group (Optional)</label>
+              <select id="uploadGroupSelect" class="w-full p-3.5 theme-input rounded-xl font-bold text-sm outline-none border">
+                <option value="">None (Personal / Standalone Bill)</option>
+              </select>
             </div>
 
             <div>
@@ -562,7 +568,6 @@
               <p class="text-[11px]" style="color: var(--text-sub);">Preferred currency for new splits</p>
             </div>
             <select id="profileCurrencySelect" onchange="updateUserDefaultCurrency(this.value)" class="text-xs font-bold p-2 rounded-xl border outline-none theme-input">
-              <option value="INR">₹ INR (Indian Rupee)</option>
               <option value="USD">$ USD (US Dollar)</option>
               <option value="EUR">€ EUR (Euro)</option>
               <option value="GBP">£ GBP (British Pound)</option>
@@ -683,7 +688,6 @@
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Currency</label>
             <select id="manualCurrency" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
-              <option value="INR">₹ INR (Indian Rupee)</option>
               <option value="USD">$ USD (US Dollar)</option>
               <option value="EUR">€ EUR (Euro)</option>
               <option value="GBP">£ GBP (British Pound)</option>
@@ -692,6 +696,14 @@
               <option value="SGD">S$ SGD (Singapore Dollar)</option>
             </select>
           </div>
+        </div>
+
+        <!-- Attach to Trip / Group Selection -->
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Attach to Trip / Group (Optional)</label>
+          <select id="manualGroupSelect" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
+            <option value="">None (Personal / Standalone Bill)</option>
+          </select>
         </div>
 
         <!-- Dynamic Items Container -->
@@ -774,7 +786,6 @@
         <div>
           <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Trip Currency</label>
           <select id="groupCurrencyInput" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
-            <option value="INR">₹ INR (Indian Rupee)</option>
             <option value="USD">$ USD (US Dollar)</option>
             <option value="EUR">€ EUR (Euro)</option>
             <option value="GBP">£ GBP (British Pound)</option>
@@ -838,12 +849,20 @@
       </div>
 
       <!-- Quick Action Buttons -->
-      <div class="flex flex-wrap gap-2">
-        <button onclick="openAddReceiptToGroupModal()" class="flex-1 py-2 px-3 lavender-glow-btn text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1">
-          <span>+ Add Bill to Trip</span>
-        </button>
-        <button onclick="shareGroupWhatsAppSummary()" class="py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md">
-          <span>💬 WhatsApp Trip Report</span>
+      <div class="space-y-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button onclick="startHostFlow(activeGroupId)" class="py-2.5 px-3 lavender-glow-btn text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md">
+            <span>📸 Scan Bill to Trip</span>
+          </button>
+          <button onclick="openManualBillModal(activeGroupId)" class="py-2.5 px-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md">
+            <span>📝 Manual Bill</span>
+          </button>
+          <button onclick="openAddReceiptToGroupModal()" class="col-span-2 sm:col-span-1 py-2.5 px-3 border text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition hover:brightness-110" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
+            <span>🔗 Link Code</span>
+          </button>
+        </div>
+        <button onclick="shareGroupWhatsAppSummary()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md transition">
+          <span>💬 WhatsApp Trip Report & Summary</span>
         </button>
       </div>
 
@@ -1144,7 +1163,8 @@
 
     // State
     let currentTheme = localStorage.getItem('split_theme') || 'dark';
-    let currentCurrency = localStorage.getItem('split_currency') || 'INR';
+    let currentCurrency = localStorage.getItem('split_currency') || 'USD';
+    if (currentCurrency === 'INR') currentCurrency = 'USD';
     let currentUser = JSON.parse(localStorage.getItem('split_user') || 'null');
     let activeReceiptId = null;
     let activeReceiptData = null;
@@ -1155,7 +1175,7 @@
     let currentQrUpiLink = '';
 
     function getCurrencySym(code) {
-      return CURRENCY_SYMBOLS[(code || currentCurrency || 'INR').toUpperCase()] || '₹';
+      return CURRENCY_SYMBOLS[(code || currentCurrency || 'USD').toUpperCase()] || '$';
     }
 
     function changeGlobalCurrency(code) {
@@ -1579,10 +1599,35 @@
     }
 
     // --- SPLIT & HOST ACTIONS ---
-    function startHostFlow() {
+    async function populateGroupDropdown(selectElementId, preselectedGroupId = null) {
+      const sel = document.getElementById(selectElementId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">None (Personal / Standalone Bill)</option>';
+      if (!currentUser || currentUser.id === 9999) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/groups/user/${currentUser.id}`);
+        const groups = await res.json();
+        if (res.ok && Array.isArray(groups)) {
+          groups.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.innerText = `🏖️ ${g.name} (${g.currency || 'USD'})`;
+            if (preselectedGroupId && parseInt(preselectedGroupId) === g.id) {
+              opt.selected = true;
+            }
+            sel.appendChild(opt);
+          });
+        }
+      } catch (e) {}
+    }
+
+    async function startHostFlow(preselectedGroupId = null) {
       document.getElementById('splitHomeSec').classList.add('hidden');
       document.getElementById('activeBillView').classList.add('hidden');
+      document.getElementById('groupDetailsModal')?.classList.add('hidden');
       document.getElementById('uploadSection').classList.remove('hidden');
+      await populateGroupDropdown('uploadGroupSelect', preselectedGroupId);
     }
 
     function cancelUpload() {
@@ -1604,6 +1649,7 @@
       const name = document.getElementById('hostUploaderName').value.trim();
       const fileInput = document.getElementById('receiptImageInput');
       const currency = document.getElementById('uploadCurrencySelect')?.value || currentCurrency;
+      const groupId = document.getElementById('uploadGroupSelect')?.value;
       const submitBtn = document.getElementById('uploadSubmitBtn');
       const spinner = document.getElementById('uploadSpinner');
       const btnText = document.getElementById('uploadBtnText');
@@ -1633,14 +1679,20 @@
 
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
-        const uploadRes = await fetch(`${API_BASE}/receipts/scan?uploader_id=${uploaderId}&currency=${currency}`, {
+
+        let uploadUrl = `${API_BASE}/receipts/scan?uploader_id=${uploaderId}&currency=${currency}`;
+        if (groupId) {
+          uploadUrl += `&group_id=${groupId}`;
+        }
+
+        const uploadRes = await fetch(uploadUrl, {
           method: 'POST',
           body: formData
         });
         const receipt = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(receipt.detail);
 
-        showToast('Receipt scanned successfully with Gemini AI!');
+        showToast(groupId ? 'Receipt scanned & attached to Trip! 🏖️' : 'Receipt scanned successfully with Gemini AI!');
         document.getElementById('uploadSection').classList.add('hidden');
         loadReceiptForJoining(receipt.id);
 
@@ -1655,7 +1707,7 @@
 
     // --- MANUAL BILL CREATION ---
     let manualItemCount = 0;
-    function openManualBillModal() {
+    async function openManualBillModal(preselectedGroupId = null) {
       manualItemCount = 0;
       const container = document.getElementById('manualItemsRowsContainer');
       container.innerHTML = '';
@@ -1663,6 +1715,8 @@
       addManualItemRow('Item 2', '');
       document.getElementById('manualCurrency').value = currentCurrency;
       calculateManualGrandTotal();
+      document.getElementById('groupDetailsModal')?.classList.add('hidden');
+      await populateGroupDropdown('manualGroupSelect', preselectedGroupId);
       document.getElementById('manualBillModal').classList.remove('hidden');
     }
 
@@ -1700,6 +1754,7 @@
       e.preventDefault();
       const storeName = document.getElementById('manualStoreName').value.trim();
       const currency = document.getElementById('manualCurrency').value;
+      const groupId = document.getElementById('manualGroupSelect')?.value;
 
       const nameInputs = document.querySelectorAll('.manual-item-name');
       const priceInputs = document.querySelectorAll('.manual-item-price');
@@ -1729,6 +1784,7 @@
             uploader_id: uploaderId,
             store_name: storeName,
             currency: currency,
+            group_id: groupId ? parseInt(groupId) : null,
             tax_amount: 0.0,
             tip_amount: 0.0,
             tax_split_method: 'proportional',
@@ -1740,7 +1796,7 @@
         if (!res.ok) throw new Error(receipt.detail || 'Could not create bill');
 
         closeManualBillModal();
-        showToast('Manual Bill created successfully! 🚀');
+        showToast(groupId ? 'Manual Bill created & added to Trip! 🏖️' : 'Manual Bill created successfully! 🚀');
         loadReceiptForJoining(receipt.id);
       } catch (err) {
         showToast(err.message, 'error');
