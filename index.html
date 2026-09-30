@@ -91,7 +91,6 @@
     .pt-safe { padding-top: calc(var(--safe-top) + 12px); }
     .pb-safe { padding-bottom: calc(var(--safe-bottom) + 140px); }
     
-    /* Dynamic Theme Cards */
     .app-card {
       background: var(--bg-card);
       backdrop-filter: blur(16px);
@@ -177,7 +176,7 @@
   <!-- NATIVE-STYLE APP TOP HEADER -->
   <header class="sticky top-0 z-30 theme-header backdrop-blur-xl border-b px-4 py-3 sm:px-6 shadow-md">
     <div class="max-w-2xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('split')">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('split'); exitActiveBillView();">
         <div id="appLogoBadge" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-[0_0_16px_rgba(168,85,247,0.5)]">
           ₹
         </div>
@@ -192,7 +191,6 @@
 
       <!-- Quick Actions Header (Theme, Currency, User Profile) -->
       <div class="flex items-center gap-2">
-        <!-- Currency Selector Pill -->
         <select id="globalCurrencySelect" onchange="changeGlobalCurrency(this.value)" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border outline-none cursor-pointer shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
           <option value="INR">₹ INR</option>
           <option value="USD">$ USD</option>
@@ -206,7 +204,6 @@
           <option value="CHF">CHF CHF</option>
         </select>
 
-        <!-- Theme Switcher -->
         <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner hover:scale-105 active:scale-95" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Dark / Light Mode">
           <span id="themeHeaderIcon" class="text-sm font-bold">🌙</span>
         </button>
@@ -236,7 +233,7 @@
           ₹
         </div>
         <h2 class="text-3xl font-black tracking-tight pt-2" style="color: var(--text-heading);" id="authScreenTitle">Sign In to SmartSplit</h2>
-        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login to scan receipts, split expenses, manage trips, customize tax/tip, and settle via UPI.</p>
+        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login to scan receipts, split expenses, manage trips, and settle via 1-tap UPI.</p>
       </div>
 
       <!-- Auth Card -->
@@ -279,21 +276,21 @@
       </div>
     </div>
 
-    <!-- ================= 2. MAIN APP DASHBOARD (AFTER LOGIN) ================= -->
+    <!-- ================= 2. MAIN APP DASHBOARD ================= -->
     <div id="appDashboard" class="hidden space-y-6">
 
       <!-- ================= TAB 1: SPLIT ================= -->
       <div id="tab-split" class="space-y-6 animate-fade pb-10">
         
-        <!-- Welcome Hero Banner -->
+        <!-- Welcome Hero & Start Split Actions -->
         <div id="splitHomeSec" class="space-y-5">
           <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-purple-900/90 via-purple-950/90 to-indigo-950 border border-purple-500/30 shadow-2xl text-white">
             <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-purple-500/25 rounded-full blur-2xl pointer-events-none"></div>
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-800/40 border border-purple-400/30 text-purple-200 text-[11px] font-bold uppercase tracking-wider mb-2">
-              ⚡ AI Receipt Scan • Manual Bill • Tax/Tip Auto Split
+              ⚡ Instant AI Scan • Manual Bill • 1-Tap UPI
             </div>
             <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2 text-white">Split Any Bill Seamlessly</h1>
-            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan with Gemini AI or create manually. Customize portions, distribute tax & tip, share 6-character private codes, and settle via 1-tap UPI or WhatsApp!</p>
+            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan with Gemini AI or create manually. Customize item portions, share 6-character private codes, and settle up in 1 tap!</p>
           </div>
 
           <!-- Action Cards Grid -->
@@ -305,7 +302,7 @@
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
                 <h2 class="text-base font-bold" style="color: var(--text-heading);">Scan Receipt</h2>
-                <p class="text-[11px] font-medium" style="color: var(--text-sub);">AI automatically extracts items, prices & totals.</p>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">AI auto-extracts items, prices & total.</p>
               </div>
               <button class="w-full lavender-glow-btn text-white py-2 rounded-xl text-xs font-bold">
                 Scan Photo
@@ -319,7 +316,7 @@
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 </div>
                 <h2 class="text-base font-bold" style="color: var(--text-heading);">Manual Bill</h2>
-                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Type in custom items without needing a photo.</p>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Type in custom items without a photo.</p>
               </div>
               <button class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold hover:brightness-110 transition shadow-md">
                 Create Bill
@@ -330,10 +327,10 @@
             <div class="app-card p-5 rounded-3xl flex flex-col justify-between space-y-3">
               <div class="space-y-2">
                 <div class="w-11 h-11 rounded-2xl bg-indigo-600/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shadow-inner">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
                 <h2 class="text-base font-bold" style="color: var(--text-heading);">Join Split</h2>
-                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Enter 6-char code (e.g. CAFE92) or ID.</p>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Enter 6-char code (e.g. 2BG27K).</p>
               </div>
               <div class="flex gap-1.5">
                 <input type="text" id="joinReceiptCodeInput" placeholder="Code / ID" class="flex-1 px-2.5 py-2 theme-input rounded-xl text-center font-bold uppercase tracking-wider outline-none border text-xs" />
@@ -402,159 +399,107 @@
           </form>
         </section>
 
-        <!-- ================= SHARE CODE & SUMMARY SCREEN ================= -->
-        <section id="hostShareSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade pb-10">
-          <div class="text-center space-y-3">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Receipt Active
-            </div>
-            <h2 class="text-2xl font-black" style="color: var(--text-heading);">Receipt Ready to Split!</h2>
-            <p class="text-xs max-w-sm mx-auto" style="color: var(--text-sub);">Share this 6-character private code with your group or send via WhatsApp:</p>
-            
-            <div class="border-2 rounded-3xl py-4 px-8 inline-block shadow-lg" style="background: var(--bg-sub); border-color: var(--border-glow);">
-              <p class="text-[10px] uppercase font-bold tracking-widest mb-1 text-purple-400">Private Join Code</p>
-              <span id="displayReceiptCode" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-purple-600 dark:text-purple-200"></span>
-            </div>
-
-            <!-- Share & Export Buttons -->
-            <div class="flex flex-wrap items-center justify-center gap-2 pt-2 max-w-md mx-auto">
-              <button onclick="shareOnWhatsApp()" class="flex-1 min-w-[150px] flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-md">
-                <span>💬 WhatsApp Summary</span>
-              </button>
-              <button onclick="copyFormattedReceiptText()" class="border px-3 py-2.5 rounded-xl font-bold text-xs transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
-                📋 Copy Text
-              </button>
-              <button onclick="printOrExportReceipt()" class="border px-3 py-2.5 rounded-xl font-bold text-xs transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
-                🖨️ PDF / Print
-              </button>
-            </div>
-          </div>
-
-          <!-- Upfront Payers Card in Host Section -->
-          <div class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
-            <div class="flex items-center gap-2.5 truncate">
-              <div class="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-base shrink-0">
-                💳
-              </div>
-              <div class="truncate">
-                <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Bill Paid Upfront By</p>
-                <p id="hostPayerNamesDisplay" class="text-xs font-bold truncate" style="color: var(--text-heading);">Host</p>
-              </div>
-            </div>
-            <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 px-3 py-1.5 rounded-xl border text-xs font-bold text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
-              <span>Manage Payers</span> ⚙️
-            </button>
-          </div>
-
-          <!-- Tax & Tip Controls Pill -->
-          <div class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
-            <div>
-              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Tax, Tip & Service Charge</p>
-              <p id="hostTaxTipSummaryDisplay" class="text-xs font-bold" style="color: var(--text-heading);">Tax: ₹0.00 • Tip: ₹0.00 (Proportional)</p>
-            </div>
-            <button type="button" onclick="openTaxTipModal(activeReceiptId)" class="shrink-0 px-3 py-1.5 rounded-xl border text-xs font-bold text-purple-300 hover:brightness-110 transition" style="background: var(--bg-chip); border-color: var(--border-main);">
-              Edit Tax & Tip 🧾
-            </button>
-          </div>
-
-          <div class="border-t pt-6 space-y-3" style="border-color: var(--border-sub);">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="font-bold text-base" style="color: var(--text-heading);">Live Who-Owes-What & Smart Settlements</h3>
-                <p class="text-[11px]" style="color: var(--text-sub);">Track simplified balances or pay directly via UPI</p>
-              </div>
-              <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold flex items-center gap-1 border px-3 py-1.5 rounded-xl transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Refresh
-              </button>
-            </div>
-            <div id="liveSummaryList" class="rounded-2xl p-2 border divide-y" style="background: var(--bg-sub); border-color: var(--border-sub); divide-color: var(--border-sub);"></div>
-          </div>
-        </section>
-
-        <!-- ================= ITEM SELECTION (GUEST & HOST SHARE ASSIGNMENT) ================= -->
-        <section id="itemsSection" class="hidden space-y-4 animate-fade pb-16">
-          <div class="app-card p-5 sm:p-7 rounded-3xl space-y-5">
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b pb-4 gap-3" style="border-color: var(--border-sub);">
-              <div>
-                <div class="flex items-center gap-2">
+        <!-- ================= UNIFIED ACTIVE BILL VIEW (CLEAN & NON-CLUTTERED) ================= -->
+        <section id="activeBillView" class="hidden space-y-4 animate-fade pb-20">
+          
+          <!-- 1. Unified Receipt Header Card -->
+          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 shadow-xl">
+            <!-- Top Row: Back, Store Title, Code Badge, Total -->
+            <div class="flex items-start justify-between gap-3 border-b pb-4" style="border-color: var(--border-sub);">
+              <div class="space-y-1">
+                <button onclick="exitActiveBillView()" class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-400 hover:underline mb-1">
+                  ← Back to Home
+                </button>
+                <div class="flex items-center gap-2 flex-wrap">
                   <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black" style="color: var(--text-heading);">Store Receipt</h2>
-                  <span id="receiptCodeBadge" class="border text-xs font-mono font-bold px-2.5 py-1 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">#0</span>
+                  <div onclick="copyDirectReceiptLink()" class="cursor-pointer flex items-center gap-1 px-2.5 py-0.5 rounded-lg border font-mono font-black text-xs text-purple-300 hover:brightness-110 transition shadow-inner" style="background: var(--bg-chip); border-color: var(--border-glow);" title="Click to copy join code">
+                    <span id="receiptCodeBadge">#2BG27K</span>
+                    <span class="text-[10px] opacity-70">📋</span>
+                  </div>
                 </div>
-                <p class="text-xs mt-0.5" style="color: var(--text-sub);">Select your portion (/2, /3, /4, Full) for each item.</p>
               </div>
-              <div class="px-4 py-2 rounded-2xl border text-left sm:text-right" style="background: var(--bg-sub); border-color: var(--border-sub);">
+
+              <!-- Grand Total Pill -->
+              <div class="px-4 py-2 rounded-2xl border text-right shrink-0" style="background: var(--bg-sub); border-color: var(--border-sub);">
                 <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Bill</p>
-                <p id="receiptGrandTotal" class="text-xl font-black" style="color: var(--text-heading);">₹0.00</p>
+                <p id="receiptGrandTotal" class="text-xl font-black text-purple-400">₹0.00</p>
               </div>
             </div>
 
-            <!-- Upfront Payers Banner in Items Section -->
+            <!-- Second Row: Upfront Payers Banner -->
             <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
               <div class="flex items-center gap-2 truncate">
                 <span class="text-purple-400 font-bold shrink-0">💳 Paid Upfront:</span>
                 <span id="itemsPayerSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Host</span>
               </div>
-              <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 text-[11px] font-bold text-purple-400 hover:underline">
-                Manage Payers
+              <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 px-2.5 py-1 rounded-xl border text-[11px] font-bold text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+                <span>Manage Payers</span> ⚙️
               </button>
             </div>
 
-            <!-- Tax & Tip Distribution Banner -->
-            <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
-              <div class="flex items-center gap-2 truncate">
-                <span class="text-purple-400 font-bold shrink-0">🧾 Tax & Tip:</span>
-                <span id="itemsTaxTipSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Tax: ₹0.00 • Tip: ₹0.00</span>
-              </div>
-              <button type="button" onclick="openTaxTipModal(activeReceiptId)" class="shrink-0 text-[11px] font-bold text-purple-400 hover:underline">
-                Configure Tax/Tip
+            <!-- Third Row: Quick Actions (WhatsApp, Copy, Print) -->
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <button onclick="shareOnWhatsApp()" class="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md transition">
+                <span>💬 WhatsApp Share</span>
               </button>
-            </div>
-
-            <!-- Estimated total summary pill with Pay Now Deeplink Button -->
-            <div class="border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
-              <div>
-                <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total (incl. Tax/Tip)</p>
-                <p id="personalEstimatedTotal" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
-              </div>
-              <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                <div class="text-xs font-bold px-3 py-2 rounded-xl border shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
-                  <span id="personalSelectedCount" class="font-extrabold text-purple-600 dark:text-purple-300">0</span> items
-                </div>
-                <!-- ⚡ Instant Pay Now Deeplink Button Beside Calculation -->
-                <button id="payCalculatedShareBtn" onclick="payCalculatedTotalNow()" class="hidden flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-[0_0_18px_rgba(16,185,129,0.35)] active:scale-95 transition">
-                  <span>⚡ Pay Now</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- List of items with Add/Edit/Delete Controls -->
-            <div class="space-y-3 pt-1">
-              <div class="flex items-center justify-between px-1">
-                <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Bill Items</span>
-                <button type="button" onclick="openAddItemModal(activeReceiptId)" class="text-xs font-bold px-2.5 py-1 rounded-lg border text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
-                  <span>+ Add Item</span>
-                </button>
-              </div>
-              <div id="itemsCardsContainer" class="space-y-3"></div>
+              <button onclick="copyFormattedReceiptText()" class="px-3 py-2 rounded-xl font-bold text-xs border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                📋 Copy Text
+              </button>
+              <button onclick="printOrExportReceipt()" class="px-3 py-2 rounded-xl font-bold text-xs border transition hover:opacity-80" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                🖨️ PDF / Print
+              </button>
             </div>
           </div>
 
-          <!-- PROMINENT FLOATING STICKY ACTION BAR FOR SAVE SHARES & PAY NOW -->
+          <!-- 2. Items Selection Card -->
+          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+              <div>
+                <h3 class="font-black text-base" style="color: var(--text-heading);">Select Your Portions</h3>
+                <p class="text-xs" style="color: var(--text-sub);">Tap portion (/2, /3, /4, Full) for what you ate</p>
+              </div>
+              <button type="button" onclick="openAddItemModal(activeReceiptId)" class="text-xs font-bold px-3 py-1.5 rounded-xl border text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+                <span>+ Add Item</span>
+              </button>
+            </div>
+
+            <!-- Dynamic List of Items -->
+            <div id="itemsCardsContainer" class="space-y-3"></div>
+          </div>
+
+          <!-- 3. Smart Settlements & Who Owes Whom Card -->
+          <div class="app-card p-5 sm:p-6 rounded-3xl space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+              <div>
+                <h3 class="font-black text-base text-emerald-400">⚡ Live Who-Owes-Whom</h3>
+                <p class="text-xs" style="color: var(--text-sub);">Calculated smart settlements & 1-tap UPI payments</p>
+              </div>
+              <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold flex items-center gap-1 border px-2.5 py-1.5 rounded-xl transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+              </button>
+            </div>
+
+            <div id="liveSummaryList" class="rounded-2xl p-2 border divide-y" style="background: var(--bg-sub); border-color: var(--border-sub); divide-color: var(--border-sub);"></div>
+          </div>
+
+          <!-- 4. Floating Sticky Bottom Bar for Shares & Payment -->
           <div class="sticky bottom-[70px] z-30 pt-2 pb-1">
             <div class="app-card p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-purple-500/50 flex items-center justify-between gap-2.5 backdrop-blur-2xl">
-              <button onclick="cancelItemSelection()" class="text-xs font-bold px-3 py-2.5 rounded-xl border hover:opacity-80 transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">
-                ← Back
-              </button>
-              <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 flex items-center justify-center gap-2 lavender-glow-btn text-white py-3 px-3 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
+              <div class="px-3 py-1.5 rounded-xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
+                <p class="text-[9px] uppercase font-bold" style="color: var(--text-dim);">My Share</p>
+                <p id="personalEstimatedTotal" class="text-base font-black text-purple-300">₹0.00</p>
+              </div>
+              <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 flex items-center justify-center gap-1.5 lavender-glow-btn text-white py-3 px-3 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
                 <span>Save Shares</span>
-                <span id="saveSharesBtnBadge" class="bg-purple-950/70 border border-purple-300/40 text-xs px-2 py-0.5 rounded-lg text-white font-extrabold">₹0.00</span>
+                <span id="personalSelectedCount" class="bg-purple-950/70 border border-purple-300/40 text-[10px] px-1.5 py-0.5 rounded-md text-white font-bold">0 items</span>
               </button>
               <button id="stickyPayNowBtn" onclick="payCalculatedTotalNow()" class="hidden flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white py-3 px-3.5 rounded-xl font-bold text-xs sm:text-sm shadow-xl active:scale-[0.98] transition">
                 <span>⚡ Pay Now</span>
               </button>
             </div>
           </div>
+
         </section>
 
       </div>
@@ -741,33 +686,11 @@
             <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Bill Items</span>
             <button type="button" onclick="addManualItemRow()" class="text-[11px] font-bold text-teal-400 hover:underline">+ Add Item Row</button>
           </div>
-          <div id="manualItemsRowsContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
-        </div>
-
-        <!-- Tax & Tip Inputs -->
-        <div class="p-3 rounded-2xl border space-y-2.5" style="background: var(--bg-sub); border-color: var(--border-sub);">
-          <span class="text-[11px] font-bold text-purple-400">Additional Charges (Optional)</span>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Tax Amount</label>
-              <input type="number" step="0.01" min="0" id="manualTaxInput" placeholder="0.00" oninput="calculateManualGrandTotal()" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Tip / Service</label>
-              <input type="number" step="0.01" min="0" id="manualTipInput" placeholder="0.00" oninput="calculateManualGrandTotal()" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Split Method</label>
-              <select id="manualTaxSplitMethod" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border">
-                <option value="proportional">Proportional</option>
-                <option value="equal">Equal</option>
-              </select>
-            </div>
-          </div>
+          <div id="manualItemsRowsContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
         </div>
 
         <!-- Total Sum Display -->
-        <div class="flex items-center justify-between p-3 rounded-2xl border" style="background: var(--bg-chip); border-color: var(--border-main);">
+        <div class="flex items-center justify-between p-3.5 rounded-2xl border" style="background: var(--bg-chip); border-color: var(--border-main);">
           <span class="text-xs font-bold" style="color: var(--text-sub);">Calculated Total Bill:</span>
           <span id="manualGrandTotalDisplay" class="text-lg font-black text-teal-400">₹0.00</span>
         </div>
@@ -814,46 +737,6 @@
     </div>
   </div>
 
-  <!-- ================= TAX & TIP SETTINGS MODAL ================= -->
-  <div id="taxTipModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
-      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">🧾</span>
-          <h3 class="text-base font-bold" style="color: var(--text-heading);">Tax & Tip Settings</h3>
-        </div>
-        <button onclick="closeTaxTipModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
-      </div>
-
-      <form onsubmit="handleTaxTipSubmit(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">GST / Sales Tax Amount</label>
-          <input type="number" step="0.01" min="0" id="taxModalTaxInput" placeholder="0.00" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Tip / Service Charge Amount</label>
-          <input type="number" step="0.01" min="0" id="taxModalTipInput" placeholder="0.00" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Distribution Method</label>
-          <select id="taxModalMethodSelect" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
-            <option value="proportional">Proportional to Items (Fair for different spenders)</option>
-            <option value="equal">Equal Split (Split evenly among participants)</option>
-          </select>
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <button type="submit" id="saveTaxTipBtn" class="w-full py-2.5 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
-            Update Tax & Tip Split
-          </button>
-          <button type="button" onclick="closeTaxTipModal()" class="w-full py-2 border rounded-xl text-xs font-bold" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- ================= CREATE TRIP / GROUP MODAL ================= -->
   <div id="createGroupModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="app-card w-full max-w-md rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
@@ -872,7 +755,7 @@
         </div>
         <div>
           <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Description (Optional)</label>
-          <input type="text" id="groupDescInput" placeholder="e.g. Hotel, food, fuel & beach activities" class="w-full p-2.5 theme-input rounded-xl text-xs font-medium outline-none border" />
+          <input type="text" id="groupDescInput" placeholder="e.g. Hotel, food, fuel & activities" class="w-full p-2.5 theme-input rounded-xl text-xs font-medium outline-none border" />
         </div>
         <div>
           <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Trip Currency</label>
@@ -1145,7 +1028,7 @@
       </button>
 
       <button onclick="switchTab('groups')" id="navBtn-groups" class="flex flex-col items-center gap-1 py-1 transition font-medium opacity-60 hover:opacity-100" style="color: var(--text-sub);">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         <span class="text-[10px]">Trips/Groups</span>
       </button>
 
@@ -1194,11 +1077,6 @@
 
     function getCurrencySym(code) {
       return CURRENCY_SYMBOLS[(code || currentCurrency || 'INR').toUpperCase()] || '₹';
-    }
-
-    function formatCurrency(amount, code = null, sym = null) {
-      const s = sym || getCurrencySym(code);
-      return `${s}${parseFloat(amount || 0).toFixed(2)}`;
     }
 
     function changeGlobalCurrency(code) {
@@ -1609,9 +1487,20 @@
       }
     }
 
+    // --- EXIT ACTIVE BILL VIEW ---
+    function exitActiveBillView() {
+      activeReceiptId = null;
+      activeReceiptData = null;
+      stopLiveSummaryPolling();
+      document.getElementById('activeBillView').classList.add('hidden');
+      document.getElementById('uploadSection').classList.add('hidden');
+      document.getElementById('splitHomeSec').classList.remove('hidden');
+    }
+
     // --- SPLIT & HOST ACTIONS ---
     function startHostFlow() {
       document.getElementById('splitHomeSec').classList.add('hidden');
+      document.getElementById('activeBillView').classList.add('hidden');
       document.getElementById('uploadSection').classList.remove('hidden');
     }
 
@@ -1670,17 +1559,9 @@
         const receipt = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(receipt.detail);
 
-        activeReceiptId = receipt.id;
-        activeReceiptData = receipt;
         showToast('Receipt scanned successfully with Gemini AI!');
-
         document.getElementById('uploadSection').classList.add('hidden');
-        document.getElementById('hostShareSection').classList.remove('hidden');
-        document.getElementById('displayReceiptCode').innerText = receipt.join_code || receipt.id;
-
-        renderItemsSelection(receipt);
-        document.getElementById('itemsSection').classList.remove('hidden');
-        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
+        loadReceiptForJoining(receipt.id);
 
       } catch (err) {
         showToast(`Error: ${err.message}`, 'error');
@@ -1699,8 +1580,6 @@
       container.innerHTML = '';
       addManualItemRow('Item 1', '');
       addManualItemRow('Item 2', '');
-      document.getElementById('manualTaxInput').value = '';
-      document.getElementById('manualTipInput').value = '';
       document.getElementById('manualCurrency').value = currentCurrency;
       calculateManualGrandTotal();
       document.getElementById('manualBillModal').classList.remove('hidden');
@@ -1718,9 +1597,9 @@
       div.id = rowId;
       div.className = 'flex items-center gap-2';
       div.innerHTML = `
-        <input type="text" placeholder="Item Name (e.g. Pizza)" value="${defaultName}" class="manual-item-name flex-1 p-2 theme-input rounded-xl text-xs font-semibold outline-none border" required />
-        <input type="number" step="0.01" min="0" placeholder="Price" value="${defaultPrice}" oninput="calculateManualGrandTotal()" class="manual-item-price w-24 p-2 theme-input rounded-xl text-xs font-bold outline-none border text-right" required />
-        <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateManualGrandTotal();" class="w-7 h-7 rounded-lg border text-red-400 flex items-center justify-center font-bold text-xs hover:bg-red-500/20 transition">✕</button>
+        <input type="text" placeholder="Item Name (e.g. Pizza)" value="${defaultName}" class="manual-item-name flex-1 p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" required />
+        <input type="number" step="0.01" min="0" placeholder="Price" value="${defaultPrice}" oninput="calculateManualGrandTotal()" class="manual-item-price w-24 p-2.5 theme-input rounded-xl text-xs font-bold outline-none border text-right" required />
+        <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateManualGrandTotal();" class="w-8 h-8 rounded-xl border text-red-400 flex items-center justify-center font-bold text-xs hover:bg-red-500/20 transition">✕</button>
       `;
       container.appendChild(div);
     }
@@ -1731,21 +1610,15 @@
       priceInputs.forEach(inp => {
         itemsSum += parseFloat(inp.value) || 0;
       });
-      const tax = parseFloat(document.getElementById('manualTaxInput').value) || 0;
-      const tip = parseFloat(document.getElementById('manualTipInput').value) || 0;
-      const total = itemsSum + tax + tip;
       const cur = document.getElementById('manualCurrency')?.value || currentCurrency;
       const sym = getCurrencySym(cur);
-      document.getElementById('manualGrandTotalDisplay').innerText = `${sym}${total.toFixed(2)}`;
+      document.getElementById('manualGrandTotalDisplay').innerText = `${sym}${itemsSum.toFixed(2)}`;
     }
 
     async function handleManualBillSubmit(e) {
       e.preventDefault();
       const storeName = document.getElementById('manualStoreName').value.trim();
       const currency = document.getElementById('manualCurrency').value;
-      const tax = parseFloat(document.getElementById('manualTaxInput').value) || 0;
-      const tip = parseFloat(document.getElementById('manualTipInput').value) || 0;
-      const splitMethod = document.getElementById('manualTaxSplitMethod').value;
 
       const nameInputs = document.querySelectorAll('.manual-item-name');
       const priceInputs = document.querySelectorAll('.manual-item-price');
@@ -1775,9 +1648,9 @@
             uploader_id: uploaderId,
             store_name: storeName,
             currency: currency,
-            tax_amount: tax,
-            tip_amount: tip,
-            tax_split_method: splitMethod,
+            tax_amount: 0.0,
+            tip_amount: 0.0,
+            tax_split_method: 'proportional',
             items: items
           })
         });
@@ -1785,18 +1658,9 @@
         const receipt = await res.json();
         if (!res.ok) throw new Error(receipt.detail || 'Could not create bill');
 
-        activeReceiptId = receipt.id;
-        activeReceiptData = receipt;
         closeManualBillModal();
         showToast('Manual Bill created successfully! 🚀');
-
-        document.getElementById('splitHomeSec').classList.add('hidden');
-        document.getElementById('hostShareSection').classList.remove('hidden');
-        document.getElementById('displayReceiptCode').innerText = receipt.join_code || receipt.id;
-
-        renderItemsSelection(receipt);
-        document.getElementById('itemsSection').classList.remove('hidden');
-        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
+        loadReceiptForJoining(receipt.id);
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
@@ -1880,51 +1744,6 @@
       }
     }
 
-    // --- TAX & TIP CONFIGURATION ---
-    function openTaxTipModal(receiptId) {
-      const data = activeReceiptData;
-      document.getElementById('taxModalTaxInput').value = data ? (data.tax_amount || '') : '';
-      document.getElementById('taxModalTipInput').value = data ? (data.tip_amount || '') : '';
-      document.getElementById('taxModalMethodSelect').value = data ? (data.tax_split_method || 'proportional') : 'proportional';
-      document.getElementById('taxTipModal').classList.remove('hidden');
-    }
-
-    function closeTaxTipModal() {
-      document.getElementById('taxTipModal').classList.add('hidden');
-    }
-
-    async function handleTaxTipSubmit(e) {
-      e.preventDefault();
-      const tax = parseFloat(document.getElementById('taxModalTaxInput').value) || 0;
-      const tip = parseFloat(document.getElementById('taxModalTipInput').value) || 0;
-      const method = document.getElementById('taxModalMethodSelect').value;
-
-      const btn = document.getElementById('saveTaxTipBtn');
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(`${API_BASE}/receipts/${activeReceiptId}/tax-tip`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tax_amount: tax,
-            tip_amount: tip,
-            tax_split_method: method
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Could not update tax/tip');
-
-        closeTaxTipModal();
-        showToast('Tax & Tip updated and auto-distributed! ✅');
-        loadReceiptForJoining(activeReceiptId);
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
     // --- JOIN FLOW ---
     function joinByCode() {
       const code = document.getElementById('joinReceiptCodeInput').value.trim();
@@ -1935,14 +1754,12 @@
     async function loadReceiptForJoining(codeOrId) {
       try {
         let endpoint = `${API_BASE}/receipts/${codeOrId}`;
-        // If string length is 6 and non-numeric, use code endpoint
         if (typeof codeOrId === 'string' && isNaN(parseInt(codeOrId))) {
           endpoint = `${API_BASE}/receipts/code/${codeOrId.toUpperCase()}`;
         }
         const res = await fetch(endpoint);
         const data = await res.json();
         if (!res.ok) {
-          // Fallback to code endpoint
           const codeRes = await fetch(`${API_BASE}/receipts/code/${codeOrId}`);
           if (codeRes.ok) {
             return loadReceiptForJoining(await codeRes.json());
@@ -1952,21 +1769,20 @@
 
         activeReceiptId = data.id;
         activeReceiptData = data;
+
+        // Hide home, show unified active bill view
         document.getElementById('splitHomeSec').classList.add('hidden');
         document.getElementById('uploadSection').classList.add('hidden');
         renderItemsSelection(data);
-        document.getElementById('itemsSection').classList.remove('hidden');
+        document.getElementById('activeBillView').classList.remove('hidden');
+
+        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
       } catch (err) {
         showToast(err.message, 'error');
       }
     }
 
-    function cancelItemSelection() {
-      document.getElementById('itemsSection').classList.add('hidden');
-      document.getElementById('splitHomeSec').classList.remove('hidden');
-    }
-
-    // --- ITEM SHARE LOGIC ---
+    // --- UNIFIED ITEM SHARE RENDERING ---
     function renderItemsSelection(data) {
       activeReceiptData = data;
       const sym = data.currency_symbol || getCurrencySym(data.currency);
@@ -1975,12 +1791,6 @@
       document.getElementById('receiptCodeBadge').innerText = data.join_code ? `#${data.join_code}` : `#${data.id}`;
       document.getElementById('receiptGrandTotal').innerText = `${sym}${parseFloat(data.total_amount).toFixed(2)}`;
 
-      const taxSummary = `Tax: ${sym}${parseFloat(data.tax_amount || 0).toFixed(2)} • Tip: ${sym}${parseFloat(data.tip_amount || 0).toFixed(2)} (${data.tax_split_method || 'proportional'})`;
-      const hostTaxEl = document.getElementById('hostTaxTipSummaryDisplay');
-      if (hostTaxEl) hostTaxEl.innerText = taxSummary;
-      const itemTaxEl = document.getElementById('itemsTaxTipSummaryText');
-      if (itemTaxEl) itemTaxEl.innerText = taxSummary;
-
       currentReceiptItems = data.items || [];
       itemSharesState = {};
 
@@ -1988,7 +1798,7 @@
       container.innerHTML = '';
 
       if (currentReceiptItems.length === 0) {
-        container.innerHTML = '<div class="p-6 text-center font-medium" style="color: var(--text-sub);">No items found. Click "+ Add Item" above to add bill items.</div>';
+        container.innerHTML = '<div class="p-6 text-center font-medium" style="color: var(--text-sub);">No items on this bill yet. Click "+ Add Item" above to add items.</div>';
         updateEstimate();
         return;
       }
@@ -1998,18 +1808,18 @@
 
         const card = document.createElement('div');
         card.id = `item-card-${item.id}`;
-        card.className = 'p-4 rounded-2xl border transition-all shadow-sm space-y-3';
+        card.className = 'p-3.5 rounded-2xl border transition-all shadow-sm space-y-2.5';
         card.style.background = 'var(--bg-sub)';
         card.style.borderColor = 'var(--border-sub)';
 
         card.innerHTML = `
           <div class="flex items-center justify-between gap-2">
-            <div>
-              <p class="font-bold text-base" style="color: var(--text-heading);">${item.item_name}</p>
-              <p class="text-xs font-semibold" style="color: var(--text-sub);">Total: ${sym}${parseFloat(item.price).toFixed(2)}</p>
+            <div class="truncate">
+              <p class="font-bold text-sm" style="color: var(--text-heading);">${item.item_name}</p>
+              <p class="text-xs font-semibold" style="color: var(--text-sub);">Price: ${sym}${parseFloat(item.price).toFixed(2)}</p>
             </div>
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="openEditItemModal(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.price})" class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs text-purple-400 hover:bg-purple-500/20" title="Edit Item">✏️</button>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button type="button" onclick="openEditItemModal(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.price})" class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs text-purple-300 hover:bg-purple-500/20" title="Edit Item">✏️</button>
               <button type="button" onclick="deleteReceiptItem(${item.id}, '${item.item_name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs text-red-400 hover:bg-red-500/20" title="Delete Item">🗑️</button>
               <div id="cost-badge-${item.id}" class="px-2.5 py-1 rounded-xl text-xs font-bold border" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-sub);">
                 ${sym}0.00
@@ -2017,16 +1827,16 @@
             </div>
           </div>
 
-          <div class="flex flex-wrap gap-1.5 pt-1">
+          <div class="flex flex-wrap gap-1.5 pt-0.5">
             <button type="button" onclick="setItemShare(${item.id}, 'none')" id="btn-none-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition bg-purple-600 text-white border-purple-600 shadow-sm">None</button>
             <button type="button" onclick="setItemShare(${item.id}, 'full')" id="btn-full-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">Full (1/1)</button>
             <button type="button" onclick="setItemShare(${item.id}, '1/2')" id="btn-1-2-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">/2 Half</button>
-            <button type="button" onclick="setItemShare(${item.id}, '1/3')" id="btn-1-3-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">/3 Third</button>
+            <button type="button" onclick="setItemShare(${item.id}, '1/3')" id="btn-1-3-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">/3</button>
             <button type="button" onclick="setItemShare(${item.id}, '1/4')" id="btn-1-4-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">/4</button>
             <button type="button" onclick="setItemShare(${item.id}, 'custom')" id="btn-custom-${item.id}" class="share-btn px-2.5 py-1 rounded-lg text-xs font-bold border transition" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-body);">/N</button>
           </div>
 
-          <div id="custom-stepper-${item.id}" class="hidden flex items-center gap-2 p-2.5 rounded-xl border text-xs" style="background: var(--bg-chip); border-color: var(--border-main);">
+          <div id="custom-stepper-${item.id}" class="hidden flex items-center gap-2 p-2 rounded-xl border text-xs" style="background: var(--bg-chip); border-color: var(--border-main);">
             <span class="font-bold" style="color: var(--text-heading);">Split among:</span>
             <div class="flex items-center rounded-lg p-0.5 border shadow-inner" style="background: var(--bg-input); border-color: var(--border-main);">
               <button type="button" onclick="adjustCustomDenom(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center font-bold rounded" style="color: var(--text-body);">-</button>
@@ -2152,42 +1962,20 @@
       });
 
       const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
-      
-      // Add proportional tax/tip estimate
-      let taxTipShare = 0;
-      if (activeReceiptData) {
-        const allItemsSum = currentReceiptItems.reduce((acc, i) => acc + parseFloat(i.price || 0), 0);
-        const extra = parseFloat(activeReceiptData.tax_amount || 0) + parseFloat(activeReceiptData.tip_amount || 0);
-        if (extra > 0 && itemsTotal > 0) {
-          if (activeReceiptData.tax_split_method === 'equal') {
-            taxTipShare = extra / 2; // rough estimate
-          } else if (allItemsSum > 0) {
-            taxTipShare = (itemsTotal / allItemsSum) * extra;
-          }
-        }
-      }
+      const formatted = `${sym}${itemsTotal.toFixed(2)}`;
 
-      const totalWithTax = itemsTotal + taxTipShare;
-      const formatted = `${sym}${totalWithTax.toFixed(2)}`;
       document.getElementById('personalEstimatedTotal').innerText = formatted;
-      document.getElementById('personalSelectedCount').innerText = count;
-      document.getElementById('saveSharesBtnBadge').innerText = formatted;
+      document.getElementById('personalSelectedCount').innerText = `${count} items`;
 
-      const calcPayBtn = document.getElementById('payCalculatedShareBtn');
       const stickyPayBtn = document.getElementById('stickyPayNowBtn');
       const isHost = (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id);
 
       if (itemsTotal > 0 && !isHost) {
-        if (calcPayBtn) {
-          calcPayBtn.classList.remove('hidden');
-          calcPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
-        }
         if (stickyPayBtn) {
           stickyPayBtn.classList.remove('hidden');
           stickyPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
         }
       } else {
-        if (calcPayBtn) calcPayBtn.classList.add('hidden');
         if (stickyPayBtn) stickyPayBtn.classList.add('hidden');
       }
     }
@@ -2223,9 +2011,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Could not save shares');
 
-        showToast('Your item shares were saved in database! ✅');
-        document.getElementById('hostShareSection').classList.remove('hidden');
-        document.getElementById('displayReceiptCode').innerText = activeReceiptData?.join_code || activeReceiptId;
+        showToast('Your item shares were saved! ✅');
         fetchSummary(activeReceiptId, 'liveSummaryList');
       } catch (err) {
         showToast(err.message, 'error');
@@ -2306,9 +2092,6 @@
 
         let text = `🧾 *${receipt.store_name || 'Store Bill'}* (Code: *${receipt.join_code || receipt.id}*)\n`;
         text += `💰 *Total Bill:* ${sym}${parseFloat(receipt.total_amount).toFixed(2)}\n`;
-        if (receipt.tax_amount > 0 || receipt.tip_amount > 0) {
-          text += `📊 *Tax & Tip:* ${sym}${(parseFloat(receipt.tax_amount||0) + parseFloat(receipt.tip_amount||0)).toFixed(2)}\n`;
-        }
         text += `💳 *Paid Upfront by:* ${summary.payers.map(p => `${p.user_name} (${sym}${p.amount_paid.toFixed(2)})`).join(', ')}\n\n`;
 
         text += `💸 *Smart Transfers (Who Pays Whom):*\n`;
@@ -2393,7 +2176,6 @@
             
             <div style="background: #f4f4f6; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
               <h2 style="font-size: 18px; margin: 0;">Grand Total: ${sym}${parseFloat(receipt.total_amount).toFixed(2)}</h2>
-              <p style="font-size: 12px; color: #555; margin: 4px 0 0;">Tax: ${sym}${parseFloat(receipt.tax_amount||0).toFixed(2)} | Tip: ${sym}${parseFloat(receipt.tip_amount||0).toFixed(2)}</p>
             </div>
 
             <h3 style="font-size: 14px; text-transform: uppercase; margin-top: 16px;">Participant Balances</h3>
@@ -2587,7 +2369,6 @@
         document.getElementById('groupModalTotalSpend').innerText = `${sym}${group.total_spend.toFixed(2)}`;
         document.getElementById('groupModalReceiptCount').innerText = group.receipts.length;
 
-        // Render Receipts
         const rList = document.getElementById('groupReceiptsListContainer');
         rList.innerHTML = '';
         if (group.receipts.length === 0) {
@@ -2612,7 +2393,6 @@
           });
         }
 
-        // Render Consolidated Transfers
         const tList = document.getElementById('groupConsolidatedTransfersContainer');
         tList.innerHTML = '';
         if (summary.transfers && summary.transfers.length > 0) {
@@ -3070,12 +2850,12 @@
       fetchSummary(receiptId, targetListId);
       liveSummaryInterval = setInterval(() => {
         const isModalOpen = !document.getElementById('receiptModal').classList.contains('hidden');
-        const isLiveSecOpen = !document.getElementById('hostShareSection').classList.contains('hidden');
+        const isBillViewOpen = !document.getElementById('activeBillView').classList.contains('hidden');
         if (targetListId === 'modalSummaryList' && isModalOpen) {
           fetchSummary(receiptId, targetListId, true);
-        } else if (targetListId === 'liveSummaryList' && isLiveSecOpen) {
+        } else if (targetListId === 'liveSummaryList' && isBillViewOpen) {
           fetchSummary(receiptId, targetListId, true);
-        } else if (!isModalOpen && !isLiveSecOpen) {
+        } else if (!isModalOpen && !isBillViewOpen) {
           clearInterval(liveSummaryInterval);
           liveSummaryInterval = null;
         }
@@ -3113,7 +2893,6 @@
         const transfers = rawSum.transfers || [];
         const payers = rawSum.payers || receiptData.payers || [];
 
-        // Update Payer Names Display across active screens
         let payerText = 'Host';
         if (payers.length > 0) {
           payerText = payers.map(p => `${p.user_name} (${sym}${p.amount_paid.toFixed(2)})`).join(', ');
@@ -3121,44 +2900,29 @@
           payerText = `${receiptData.uploader_name} (${sym}${parseFloat(receiptData.total_amount).toFixed(2)})`;
         }
 
-        const hPayerEl = document.getElementById('hostPayerNamesDisplay');
-        if (hPayerEl) hPayerEl.innerText = payerText;
         const iPayerEl = document.getElementById('itemsPayerSummaryText');
         if (iPayerEl) iPayerEl.innerText = payerText;
         const mPayerEl = document.getElementById('modalPayerSummaryText');
         if (mPayerEl) mPayerEl.innerText = payerText;
 
         if (users.length === 0 && transfers.length === 0) {
-          list.innerHTML = '<div class="p-4 text-center text-xs font-medium" style="color: var(--text-sub);">No participant shares assigned yet.</div>';
+          list.innerHTML = '<div class="p-4 text-center text-xs font-medium" style="color: var(--text-sub);">No participant shares assigned yet. Select items above and tap "Save Shares".</div>';
           return;
         }
 
         // SECTION 1: SMART SETTLEMENT TRANSFERS
         const transferContainer = document.createElement('div');
-        transferContainer.className = 'space-y-3 pb-3';
-
-        const transferHeader = document.createElement('div');
-        transferHeader.className = 'flex items-center justify-between pt-1 px-1';
-        transferHeader.innerHTML = `
-          <div class="flex items-center gap-1.5">
-            <span class="text-emerald-400 font-bold text-xs">⚡ Who Pays Whom (Simplified Settlements)</span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-950/60 text-emerald-300 border-emerald-500/40">Auto</span>
-          </div>
-          <button type="button" onclick="openManagePayersModal(${receiptId})" class="text-[11px] font-bold text-purple-400 hover:underline">
-            Edit Payers 💳
-          </button>
-        `;
-        transferContainer.appendChild(transferHeader);
+        transferContainer.className = 'space-y-2.5 pb-2';
 
         if (transfers.length === 0) {
           const noDebtDiv = document.createElement('div');
-          noDebtDiv.className = 'p-3.5 rounded-2xl border text-center text-xs font-bold text-emerald-400 bg-emerald-950/30 border-emerald-500/30';
+          noDebtDiv.className = 'p-3 rounded-2xl border text-center text-xs font-bold text-emerald-400 bg-emerald-950/30 border-emerald-500/30';
           noDebtDiv.innerHTML = `🎉 All balances are perfectly settled! No money transfers needed.`;
           transferContainer.appendChild(noDebtDiv);
         } else {
           transfers.forEach(tr => {
             const trCard = document.createElement('div');
-            trCard.className = 'p-3.5 rounded-2xl border space-y-2.5 shadow-sm';
+            trCard.className = 'p-3 rounded-2xl border space-y-2 shadow-sm';
             trCard.style.background = 'var(--bg-card)';
             trCard.style.borderColor = tr.is_paid ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-main)';
 
@@ -3187,13 +2951,13 @@
             }
 
             const statusBtn = isPaid
-              ? `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, true, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅${tr.settled_at ? ` <span class="text-[9px] opacity-80">(${tr.settled_at})</span>` : ''}</button>`
-              : `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, false, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
+              ? `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, true, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅${tr.settled_at ? ` <span class="text-[9px] opacity-80">(${tr.settled_at})</span>` : ''}</button>`
+              : `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, false, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
 
             trCard.innerHTML = `
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-full bg-purple-900/60 border border-purple-500/40 text-purple-200 flex items-center justify-center font-bold text-xs">
+                  <div class="w-6 h-6 rounded-full bg-purple-900/60 border border-purple-500/40 text-purple-200 flex items-center justify-center font-bold text-[10px]">
                     ${(tr.from_user_name || 'U')[0].toUpperCase()}
                   </div>
                   <div class="text-xs font-bold" style="color: var(--text-heading);">
@@ -3202,12 +2966,12 @@
                     <span class="text-purple-400">${tr.to_user_name}</span>
                   </div>
                 </div>
-                <div class="font-black text-base ${isPaid ? 'text-emerald-400 line-through opacity-75' : 'text-purple-300'}">
+                <div class="font-black text-sm ${isPaid ? 'text-emerald-400 line-through opacity-75' : 'text-purple-300'}">
                   ${sym}${tr.amount.toFixed(2)}
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t gap-2 flex-wrap" style="border-color: var(--border-sub);">
+              <div class="flex items-center justify-between pt-1.5 border-t gap-2 flex-wrap" style="border-color: var(--border-sub);">
                 <div class="flex items-center gap-1.5">
                   ${statusBtn}
                 </div>
@@ -3223,17 +2987,17 @@
 
         // SECTION 2: PARTICIPANT BALANCES & CONSUMPTION
         const balancesHeader = document.createElement('div');
-        balancesHeader.className = 'flex items-center justify-between pt-4 pb-2 border-t px-1';
+        balancesHeader.className = 'flex items-center justify-between pt-3 pb-1.5 border-t px-1';
         balancesHeader.style.borderColor = 'var(--border-sub)';
         balancesHeader.innerHTML = `
-          <span class="text-xs font-bold" style="color: var(--text-sub);">👥 Member Balances & Items Breakdown</span>
+          <span class="text-xs font-bold" style="color: var(--text-sub);">👥 Member Balances & Consumption</span>
           <span class="text-[10px] font-bold text-purple-400">Tap row for items</span>
         `;
         list.appendChild(balancesHeader);
 
         users.forEach(row => {
           const div = document.createElement('div');
-          div.className = 'p-3 flex flex-col gap-2 rounded-2xl border transition hover:border-purple-500/30';
+          div.className = 'p-2.5 flex flex-col gap-1.5 rounded-2xl border transition hover:border-purple-500/30';
           div.style.background = 'var(--bg-sub)';
           div.style.borderColor = 'var(--border-sub)';
 
@@ -3243,17 +3007,17 @@
 
           let balanceBadge = '';
           if (net > 0.009) {
-            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">+${sym}${net.toFixed(2)} (gets back)</span>`;
+            balanceBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">+${sym}${net.toFixed(2)} (gets back)</span>`;
           } else if (net < -0.009) {
-            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-amber-950/80 text-amber-400 border border-amber-500/30">-${sym}${Math.abs(net).toFixed(2)} (owes)</span>`;
+            balanceBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-950/80 text-amber-400 border border-amber-500/30">-${sym}${Math.abs(net).toFixed(2)} (owes)</span>`;
           } else {
-            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-purple-950/60 text-purple-300 border border-purple-500/20">${sym}0.00 (settled)</span>`;
+            balanceBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-purple-950/60 text-purple-300 border border-purple-500/20">${sym}0.00 (settled)</span>`;
           }
 
           let itemsHtml = (row.items && row.items.length > 0)
             ? row.items.map(i => `
                 <div class="flex justify-between text-xs" style="color: var(--text-sub);">
-                  <span class="truncate pr-2">${i.item_name} <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">(${i.portion_label || '1/1'})</span></span>
+                  <span class="truncate pr-2">${i.item_name} <span class="text-[10px] font-bold border px-1 py-0.5 rounded" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">(${i.portion_label || '1/1'})</span></span>
                   <span class="font-bold whitespace-nowrap" style="color: var(--text-heading);">${sym}${i.cost.toFixed(2)}</span>
                 </div>
               `).join('')
@@ -3261,21 +3025,21 @@
 
           div.innerHTML = `
             <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md">
                   ${(row.user_name || 'U')[0].toUpperCase()}
                 </div>
                 <div>
-                  <span class="font-bold text-sm" style="color: var(--text-heading);">${row.user_name}</span>
-                  <p class="text-[10px]" style="color: var(--text-dim);">Paid: ${sym}${paidUpfront.toFixed(2)} • Consumed: ${sym}${consumed.toFixed(2)}</p>
+                  <span class="font-bold text-xs" style="color: var(--text-heading);">${row.user_name}</span>
+                  <p class="text-[9px]" style="color: var(--text-dim);">Paid: ${sym}${paidUpfront.toFixed(2)} • Consumed: ${sym}${consumed.toFixed(2)}</p>
                 </div>
               </div>
               <div class="text-right">
                 ${balanceBadge}
               </div>
             </div>
-            <div class="hidden pt-2 pl-10 space-y-1.5 border-t mt-1" style="border-color: var(--border-sub);">
-              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Consumed Items & Tax/Tip:</p>
+            <div class="hidden pt-2 pl-9 space-y-1 border-t mt-1" style="border-color: var(--border-sub);">
+              <p class="text-[9px] font-bold uppercase" style="color: var(--text-dim);">Selected Items:</p>
               ${itemsHtml}
             </div>
           `;
@@ -3301,7 +3065,7 @@
             </div>
             <p class="font-bold text-base" style="color: var(--text-heading);">No expense history yet</p>
             <p class="text-xs" style="color: var(--text-sub);">Upload a receipt or create a bill to see it stored here permanently.</p>
-            <button onclick="switchTab('split')" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Start a Split</button>
+            <button onclick="switchTab('split'); exitActiveBillView();" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Start a Split</button>
           </div>
         `;
         document.getElementById('profileTotalOwedSum').innerText = '₹0.00';
