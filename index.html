@@ -402,7 +402,7 @@
               <!-- Grand Total Pill -->
               <div class="px-2.5 py-1 rounded-xl border text-right shrink-0" style="background: var(--bg-sub); border-color: var(--border-sub);">
                 <p class="text-[8px] uppercase font-bold tracking-wider" style="color: var(--text-dim);">Total Bill</p>
-                <p id="receiptGrandTotal" class="text-base sm:text-lg font-black text-purple-400 leading-tight">$0.00</p>
+                <p id="receiptGrandTotal" class="text-base sm:text-lg font-black text-purple-400 leading-tight">₹0.00</p>
               </div>
             </div>
 
@@ -469,7 +469,7 @@
             <div class="app-card p-2.5 sm:p-3 rounded-2xl shadow-2xl border-2 border-purple-500/50 flex items-center justify-between gap-2 backdrop-blur-2xl">
               <div class="px-2.5 py-1 rounded-xl border shrink-0 text-left" style="background: var(--bg-sub); border-color: var(--border-sub);">
                 <p class="text-[8px] uppercase font-bold tracking-wider" style="color: var(--text-dim);">My Share</p>
-                <p id="personalEstimatedTotal" class="text-sm sm:text-base font-black text-purple-300 leading-tight">$0.00</p>
+                <p id="personalEstimatedTotal" class="text-sm sm:text-base font-black text-purple-300 leading-tight">₹0.00</p>
               </div>
               <button id="saveSharesBtn" onclick="submitPersonalShares()" class="flex-1 min-w-0 flex items-center justify-center gap-1.5 lavender-glow-btn text-white py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 active:scale-[0.99] transition">
                 <span class="truncate">Save Shares</span>
@@ -1118,8 +1118,8 @@
 
     // State
     let currentTheme = localStorage.getItem('split_theme') || 'dark';
-    let currentCurrency = localStorage.getItem('split_currency') || 'USD';
-    if (currentCurrency === 'INR') currentCurrency = 'USD';
+    let currentCurrency = 'INR';
+    localStorage.setItem('split_currency', 'INR');
     let currentUser = JSON.parse(localStorage.getItem('split_user') || 'null');
     let activeReceiptId = null;
     let activeReceiptData = null;
@@ -1130,7 +1130,7 @@
     let currentQrUpiLink = '';
 
     function getCurrencySym(code) {
-      return CURRENCY_SYMBOLS[(code || currentCurrency || 'USD').toUpperCase()] || '$';
+      return CURRENCY_SYMBOLS[(code || currentCurrency || 'INR').toUpperCase()] || '₹';
     }
 
     function changeGlobalCurrency(code) {
@@ -1560,7 +1560,7 @@
           groups.forEach(g => {
             const opt = document.createElement('option');
             opt.value = g.id;
-            opt.innerText = `🏖️ ${g.name} (${g.currency || 'USD'})`;
+            opt.innerText = `🏖️ ${g.name} (${g.currency || 'INR'})`;
             if (preselectedGroupId && parseInt(preselectedGroupId) === g.id) {
               opt.selected = true;
             }
@@ -1596,7 +1596,7 @@
       e.preventDefault();
       const name = document.getElementById('hostUploaderName').value.trim();
       const fileInput = document.getElementById('receiptImageInput');
-      const currency = currentCurrency || 'USD';
+      const currency = currentCurrency || 'INR';
       const groupId = document.getElementById('uploadGroupSelect')?.value;
       const submitBtn = document.getElementById('uploadSubmitBtn');
       const spinner = document.getElementById('uploadSpinner');
@@ -1699,7 +1699,7 @@
     async function handleManualBillSubmit(e) {
       e.preventDefault();
       const storeName = document.getElementById('manualStoreName').value.trim();
-      const currency = currentCurrency || 'USD';
+      const currency = currentCurrency || 'INR';
       const groupId = document.getElementById('manualGroupSelect')?.value;
 
       const nameInputs = document.querySelectorAll('.manual-item-name');
@@ -2633,7 +2633,7 @@
       e.preventDefault();
       const name = document.getElementById('groupNameInput').value.trim();
       const desc = document.getElementById('groupDescInput').value.trim();
-      const cur = currentCurrency || 'USD';
+      const cur = currentCurrency || 'INR';
 
       const checkedBoxes = document.querySelectorAll('.group-member-checkbox:checked');
       const memberIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
