@@ -178,7 +178,7 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('split'); exitActiveBillView();">
         <div id="appLogoBadge" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-[0_0_16px_rgba(168,85,247,0.5)]">
-          ₹
+          ⚡
         </div>
         <div>
           <span class="font-extrabold text-lg tracking-tight flex items-center gap-1.5" style="color: var(--text-heading);">
@@ -189,20 +189,8 @@
         </div>
       </div>
 
-      <!-- Quick Actions Header (Theme, Currency, User Profile) -->
+      <!-- Quick Actions Header (Theme, User Profile) -->
       <div class="flex items-center gap-2">
-        <select id="globalCurrencySelect" onchange="changeGlobalCurrency(this.value)" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border outline-none cursor-pointer shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
-          <option value="USD">$ USD</option>
-          <option value="EUR">€ EUR</option>
-          <option value="GBP">£ GBP</option>
-          <option value="AED">د.إ AED</option>
-          <option value="CAD">C$ CAD</option>
-          <option value="SGD">S$ SGD</option>
-          <option value="AUD">A$ AUD</option>
-          <option value="JPY">¥ JPY</option>
-          <option value="CHF">CHF CHF</option>
-        </select>
-
         <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner hover:scale-105 active:scale-95" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Dark / Light Mode">
           <span id="themeHeaderIcon" class="text-sm font-bold">🌙</span>
         </button>
@@ -229,7 +217,7 @@
     <div id="authScreen" class="space-y-6 animate-fade pt-2 sm:pt-6">
       <div class="text-center space-y-2">
         <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-3xl mx-auto shadow-[0_0_30px_rgba(168,85,247,0.5)]">
-          ₹
+          ⚡
         </div>
         <h2 class="text-3xl font-black tracking-tight pt-2" style="color: var(--text-heading);" id="authScreenTitle">Sign In to SmartSplit</h2>
         <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login to scan receipts, split expenses, manage trips, and settle via 1-tap UPI.</p>
@@ -353,23 +341,9 @@
           </div>
 
           <form id="uploadForm" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Who paid the bill?</label>
-                <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3.5 theme-input rounded-xl font-semibold text-sm outline-none border" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Currency</label>
-                <select id="uploadCurrencySelect" class="w-full p-3.5 theme-input rounded-xl font-bold text-sm outline-none border">
-                  <option value="USD">$ USD (US Dollar)</option>
-                  <option value="EUR">€ EUR (Euro)</option>
-                  <option value="GBP">£ GBP (British Pound)</option>
-                  <option value="AED">د.إ AED (UAE Dirham)</option>
-                  <option value="CAD">C$ CAD (Canadian Dollar)</option>
-                  <option value="SGD">S$ SGD (Singapore Dollar)</option>
-                  <option value="AUD">A$ AUD (Australian Dollar)</option>
-                </select>
-              </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Who paid the bill?</label>
+              <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3.5 theme-input rounded-xl font-semibold text-sm outline-none border" />
             </div>
 
             <!-- Attach to Trip / Group Selection -->
@@ -577,21 +551,6 @@
             </div>
           </div>
 
-          <!-- Preferred Currency Selector -->
-          <div class="p-4 rounded-2xl border flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-sub);">
-            <div>
-              <p class="text-xs font-bold" style="color: var(--text-heading);">Default Currency</p>
-              <p class="text-[11px]" style="color: var(--text-sub);">Preferred currency for new splits</p>
-            </div>
-            <select id="profileCurrencySelect" onchange="updateUserDefaultCurrency(this.value)" class="text-xs font-bold p-2 rounded-xl border outline-none theme-input">
-              <option value="USD">$ USD (US Dollar)</option>
-              <option value="EUR">€ EUR (Euro)</option>
-              <option value="GBP">£ GBP (British Pound)</option>
-              <option value="AED">د.إ AED (UAE Dirham)</option>
-              <option value="CAD">C$ CAD (Canadian Dollar)</option>
-              <option value="SGD">S$ SGD (Singapore Dollar)</option>
-              <option value="AUD">A$ AUD (Australian Dollar)</option>
-            </select>
           </div>
 
           <!-- UPI PAYMENT SETTINGS CARD -->
@@ -699,22 +658,9 @@
       </div>
 
       <form onsubmit="handleManualBillSubmit(event)" class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Store / Restaurant Name</label>
-            <input type="text" id="manualStoreName" required placeholder="e.g. Olive Garden" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Currency</label>
-            <select id="manualCurrency" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
-              <option value="USD">$ USD (US Dollar)</option>
-              <option value="EUR">€ EUR (Euro)</option>
-              <option value="GBP">£ GBP (British Pound)</option>
-              <option value="AED">د.إ AED (UAE Dirham)</option>
-              <option value="CAD">C$ CAD (Canadian Dollar)</option>
-              <option value="SGD">S$ SGD (Singapore Dollar)</option>
-            </select>
-          </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Store / Restaurant Name</label>
+          <input type="text" id="manualStoreName" required placeholder="e.g. Olive Garden" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
         </div>
 
         <!-- Attach to Trip / Group Selection -->
@@ -801,16 +747,6 @@
         <div>
           <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Description (Optional)</label>
           <input type="text" id="groupDescInput" placeholder="e.g. Hotel, food, fuel & activities" class="w-full p-2.5 theme-input rounded-xl text-xs font-medium outline-none border" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Trip Currency</label>
-          <select id="groupCurrencyInput" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
-            <option value="USD">$ USD (US Dollar)</option>
-            <option value="EUR">€ EUR (Euro)</option>
-            <option value="GBP">£ GBP (British Pound)</option>
-            <option value="AED">د.إ AED (UAE Dirham)</option>
-            <option value="CAD">C$ CAD (Canadian Dollar)</option>
-          </select>
         </div>
 
         <div>
@@ -1244,8 +1180,6 @@
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme(currentTheme);
-      const curSelect = document.getElementById('globalCurrencySelect');
-      if (curSelect) curSelect.value = currentCurrency;
       checkAuthState();
 
       if (receiptParam && currentUser) {
@@ -1274,11 +1208,6 @@
         document.getElementById('profileNameText').innerText = currentUser.name;
         document.getElementById('profileUsernameText').innerText = `@${currentUser.username || 'user'}`;
         if (uploaderInput) uploaderInput.value = currentUser.name;
-
-        if (currentUser.default_currency) {
-          const profCur = document.getElementById('profileCurrencySelect');
-          if (profCur) profCur.value = currentUser.default_currency;
-        }
 
         renderProfileUpiState();
 
@@ -1667,7 +1596,7 @@
       e.preventDefault();
       const name = document.getElementById('hostUploaderName').value.trim();
       const fileInput = document.getElementById('receiptImageInput');
-      const currency = document.getElementById('uploadCurrencySelect')?.value || currentCurrency;
+      const currency = currentCurrency || 'USD';
       const groupId = document.getElementById('uploadGroupSelect')?.value;
       const submitBtn = document.getElementById('uploadSubmitBtn');
       const spinner = document.getElementById('uploadSpinner');
@@ -1732,7 +1661,6 @@
       container.innerHTML = '';
       addManualItemRow('Item 1', '');
       addManualItemRow('Item 2', '');
-      document.getElementById('manualCurrency').value = currentCurrency;
       calculateManualGrandTotal();
       document.getElementById('groupDetailsModal')?.classList.add('hidden');
       await populateGroupDropdown('manualGroupSelect', preselectedGroupId);
@@ -1764,15 +1692,14 @@
       priceInputs.forEach(inp => {
         itemsSum += parseFloat(inp.value) || 0;
       });
-      const cur = document.getElementById('manualCurrency')?.value || currentCurrency;
-      const sym = getCurrencySym(cur);
+      const sym = getCurrencySym(currentCurrency);
       document.getElementById('manualGrandTotalDisplay').innerText = `${sym}${itemsSum.toFixed(2)}`;
     }
 
     async function handleManualBillSubmit(e) {
       e.preventDefault();
       const storeName = document.getElementById('manualStoreName').value.trim();
-      const currency = document.getElementById('manualCurrency').value;
+      const currency = currentCurrency || 'USD';
       const groupId = document.getElementById('manualGroupSelect')?.value;
 
       const nameInputs = document.querySelectorAll('.manual-item-name');
@@ -2691,7 +2618,6 @@
     async function openCreateGroupModal() {
       document.getElementById('groupNameInput').value = '';
       document.getElementById('groupDescInput').value = '';
-      document.getElementById('groupCurrencyInput').value = currentCurrency;
       const searchInp = document.getElementById('groupMemberSearchInput');
       if (searchInp) searchInp.value = '';
 
@@ -2707,7 +2633,7 @@
       e.preventDefault();
       const name = document.getElementById('groupNameInput').value.trim();
       const desc = document.getElementById('groupDescInput').value.trim();
-      const cur = document.getElementById('groupCurrencyInput').value;
+      const cur = currentCurrency || 'USD';
 
       const checkedBoxes = document.querySelectorAll('.group-member-checkbox:checked');
       const memberIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
