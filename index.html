@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>SplitExpense - Smart Receipt Splitter</title>
+  <title>SmartSplit - AI Expense Splitter & Multi-Trip Aggregator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="manifest" href="/manifest.json" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SplitExpense" />
+  <meta name="apple-mobile-web-app-title" content="SmartSplit" />
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" />
   <style>
     :root {
@@ -24,7 +24,7 @@
       -webkit-user-select: none;
       transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
     }
-    input, textarea {
+    input, textarea, select {
       user-select: text;
       -webkit-user-select: text;
     }
@@ -142,6 +142,27 @@
     .theme-input:focus {
       border-color: #A855F7;
     }
+
+    /* Print View Styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+      }
+      header, nav, #toastContainer, .floating-btn {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
@@ -157,21 +178,35 @@
   <header class="sticky top-0 z-30 theme-header backdrop-blur-xl border-b px-4 py-3 sm:px-6 shadow-md">
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('split')">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-[0_0_16px_rgba(168,85,247,0.5)]">
+        <div id="appLogoBadge" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-[0_0_16px_rgba(168,85,247,0.5)]">
           ₹
         </div>
         <div>
           <span class="font-extrabold text-lg tracking-tight flex items-center gap-1.5" style="color: var(--text-heading);">
-            SplitExpense
+            SmartSplit
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
           </span>
-          <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">AI Receipt Split</p>
+          <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">AI Split & Multi-Trip</p>
         </div>
       </div>
 
-      <!-- Quick Theme Toggle & User Info (Header) -->
+      <!-- Quick Actions Header (Theme, Currency, User Profile) -->
       <div class="flex items-center gap-2">
-        <!-- 🌙 / ☀️ Theme Switcher Icon on Home Screen Header -->
+        <!-- Currency Selector Pill -->
+        <select id="globalCurrencySelect" onchange="changeGlobalCurrency(this.value)" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border outline-none cursor-pointer shadow-inner" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">
+          <option value="INR">₹ INR</option>
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+          <option value="AED">د.إ AED</option>
+          <option value="CAD">C$ CAD</option>
+          <option value="SGD">S$ SGD</option>
+          <option value="AUD">A$ AUD</option>
+          <option value="JPY">¥ JPY</option>
+          <option value="CHF">CHF CHF</option>
+        </select>
+
+        <!-- Theme Switcher -->
         <button id="themeToggleHeaderBtn" onclick="toggleTheme()" class="w-9 h-9 rounded-2xl flex items-center justify-center border transition shadow-inner hover:scale-105 active:scale-95" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);" title="Toggle Dark / Light Mode">
           <span id="themeHeaderIcon" class="text-sm font-bold">🌙</span>
         </button>
@@ -181,7 +216,7 @@
             <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-sm" id="headerAvatar">
               U
             </div>
-            <span id="headerUserName" class="text-xs font-bold max-w-[90px] truncate" style="color: var(--text-body);">User</span>
+            <span id="headerUserName" class="text-xs font-bold max-w-[80px] truncate" style="color: var(--text-body);">User</span>
           </div>
           <button id="headerLogoutBtn" onclick="logoutUser()" class="hidden text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 px-2.5 py-1.5 rounded-xl hover:bg-red-500/20 transition">
             Logout
@@ -194,19 +229,18 @@
   <!-- MAIN APP CONTAINER -->
   <main class="max-w-2xl mx-auto p-4 sm:p-6 pb-safe relative z-10">
 
-    <!-- ================= 1. PRIMARY LOGIN / SIGN UP SCREEN (FIRST SCREEN) ================= -->
+    <!-- ================= 1. PRIMARY LOGIN / SIGN UP SCREEN ================= -->
     <div id="authScreen" class="space-y-6 animate-fade pt-2 sm:pt-6">
       <div class="text-center space-y-2">
         <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-3xl mx-auto shadow-[0_0_30px_rgba(168,85,247,0.5)]">
           ₹
         </div>
-        <h2 class="text-3xl font-black tracking-tight pt-2" style="color: var(--text-heading);" id="authScreenTitle">Sign In to SplitExpense</h2>
-        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login with your credentials to scan receipts, split costs, set UPI ID, and retrieve saved expense history.</p>
+        <h2 class="text-3xl font-black tracking-tight pt-2" style="color: var(--text-heading);" id="authScreenTitle">Sign In to SmartSplit</h2>
+        <p class="text-xs max-w-xs mx-auto" style="color: var(--text-sub);">Login to scan receipts, split expenses, manage trips, customize tax/tip, and settle via UPI.</p>
       </div>
 
       <!-- Auth Card -->
       <div class="app-card p-6 sm:p-8 rounded-3xl space-y-5">
-        <!-- Toggle Tabs -->
         <div class="flex p-1 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
           <button id="tabBtnLogin" type="button" onclick="setAuthMode('login')" class="flex-1 py-2 text-xs font-bold rounded-xl transition bg-purple-600 text-white shadow-md shadow-purple-900/40">
             Log In
@@ -219,17 +253,17 @@
         <form id="authScreenForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
           <div id="authNameField" class="hidden">
             <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Full Name</label>
-            <input type="text" id="authNameInput" placeholder="e.g. Alex Smith" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500/25 transition border" />
+            <input type="text" id="authNameInput" placeholder="e.g. Alex Smith" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none border" />
           </div>
 
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Username</label>
-            <input type="text" id="authUsernameInput" required placeholder="e.g. alex22" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500/25 transition border" />
+            <input type="text" id="authUsernameInput" required placeholder="e.g. alex22" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none border" />
           </div>
 
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Password</label>
-            <input type="password" id="authPasswordInput" required placeholder="••••••••" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500/25 transition border" />
+            <input type="password" id="authPasswordInput" required placeholder="••••••••" class="w-full p-3.5 theme-input rounded-xl text-sm font-semibold outline-none border" />
           </div>
 
           <button type="submit" id="authSubmitBtn" class="w-full py-3.5 lavender-glow-btn text-white rounded-xl font-bold text-sm">
@@ -256,40 +290,54 @@
           <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-purple-900/90 via-purple-950/90 to-indigo-950 border border-purple-500/30 shadow-2xl text-white">
             <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-purple-500/25 rounded-full blur-2xl pointer-events-none"></div>
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-800/40 border border-purple-400/30 text-purple-200 text-[11px] font-bold uppercase tracking-wider mb-2">
-              ⚡ Instant AI Receipt Splitter & UPI Payments
+              ⚡ AI Receipt Scan • Manual Bill • Tax/Tip Auto Split
             </div>
-            <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2 text-white">Split Bills With Ease</h1>
-            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan any receipt with Gemini AI, customize exact portions (/2, /3, /4, Full), and collect UPI payments seamlessly.</p>
+            <h1 class="text-2xl sm:text-3xl font-black leading-tight mb-2 text-white">Split Any Bill Seamlessly</h1>
+            <p class="text-purple-200/80 text-xs sm:text-sm font-medium leading-relaxed">Scan with Gemini AI or create manually. Customize portions, distribute tax & tip, share 6-character private codes, and settle via 1-tap UPI or WhatsApp!</p>
           </div>
 
           <!-- Action Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Upload/Host Card -->
-            <div onclick="startHostFlow()" class="app-card-interactive p-6 rounded-3xl cursor-pointer flex flex-col justify-between space-y-4">
-              <div class="space-y-3">
-                <div class="w-12 h-12 rounded-2xl bg-purple-600/15 border border-purple-500/30 text-purple-600 dark:text-purple-300 flex items-center justify-center shadow-inner">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Scan Receipt Card -->
+            <div onclick="startHostFlow()" class="app-card-interactive p-5 rounded-3xl cursor-pointer flex flex-col justify-between space-y-3">
+              <div class="space-y-2">
+                <div class="w-11 h-11 rounded-2xl bg-purple-600/15 border border-purple-500/30 text-purple-600 dark:text-purple-300 flex items-center justify-center shadow-inner">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
-                <h2 class="text-lg font-bold" style="color: var(--text-heading);">Upload Receipt</h2>
-                <p class="text-xs font-medium" style="color: var(--text-sub);">Scan bill with AI and generate a 4-digit code for your friends.</p>
+                <h2 class="text-base font-bold" style="color: var(--text-heading);">Scan Receipt</h2>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">AI automatically extracts items, prices & totals.</p>
               </div>
-              <button class="w-full lavender-glow-btn text-white py-2.5 rounded-xl text-xs font-bold">
-                Start New Split
+              <button class="w-full lavender-glow-btn text-white py-2 rounded-xl text-xs font-bold">
+                Scan Photo
+              </button>
+            </div>
+
+            <!-- Manual Bill Card -->
+            <div onclick="openManualBillModal()" class="app-card-interactive p-5 rounded-3xl cursor-pointer flex flex-col justify-between space-y-3">
+              <div class="space-y-2">
+                <div class="w-11 h-11 rounded-2xl bg-teal-600/15 border border-teal-500/30 text-teal-600 dark:text-teal-300 flex items-center justify-center shadow-inner">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </div>
+                <h2 class="text-base font-bold" style="color: var(--text-heading);">Manual Bill</h2>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Type in custom items without needing a photo.</p>
+              </div>
+              <button class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold hover:brightness-110 transition shadow-md">
+                Create Bill
               </button>
             </div>
 
             <!-- Join Split Card -->
-            <div class="app-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
-              <div class="space-y-3">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-600/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shadow-inner">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <div class="app-card p-5 rounded-3xl flex flex-col justify-between space-y-3">
+              <div class="space-y-2">
+                <div class="w-11 h-11 rounded-2xl bg-indigo-600/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shadow-inner">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
-                <h2 class="text-lg font-bold" style="color: var(--text-heading);">Join a Split</h2>
-                <p class="text-xs font-medium" style="color: var(--text-sub);">Enter the receipt code from your friend to select your share.</p>
+                <h2 class="text-base font-bold" style="color: var(--text-heading);">Join Split</h2>
+                <p class="text-[11px] font-medium" style="color: var(--text-sub);">Enter 6-char code (e.g. CAFE92) or ID.</p>
               </div>
-              <div class="flex gap-2">
-                <input type="number" id="joinReceiptCodeInput" placeholder="Code (e.g. 18)" class="flex-1 px-3 py-2.5 theme-input rounded-xl text-center font-bold outline-none border text-sm" />
-                <button onclick="joinByCode()" class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:brightness-110 transition shadow-md">
+              <div class="flex gap-1.5">
+                <input type="text" id="joinReceiptCodeInput" placeholder="Code / ID" class="flex-1 px-2.5 py-2 theme-input rounded-xl text-center font-bold uppercase tracking-wider outline-none border text-xs" />
+                <button onclick="joinByCode()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-indigo-500 transition shadow-md">
                   Join
                 </button>
               </div>
@@ -298,20 +346,35 @@
 
         </div>
 
-        <!-- ================= UPLOAD SECTION ================= -->
+        <!-- ================= UPLOAD PHOTO SECTION ================= -->
         <section id="uploadSection" class="hidden app-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade pb-10">
           <div class="flex items-center justify-between border-b pb-4" style="border-color: var(--border-sub);">
             <div>
-              <h2 class="text-xl font-bold" style="color: var(--text-heading);">Upload Receipt</h2>
+              <h2 class="text-xl font-bold" style="color: var(--text-heading);">Upload Receipt Photo</h2>
               <p class="text-xs" style="color: var(--text-sub);">Take a photo or upload an image of the bill.</p>
             </div>
             <button onclick="cancelUpload()" class="text-xs font-bold px-3 py-1.5 rounded-xl border" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">Cancel</button>
           </div>
 
           <form id="uploadForm" class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Who paid the bill?</label>
-              <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3.5 theme-input rounded-xl font-semibold text-sm outline-none border" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Who paid the bill?</label>
+                <input type="text" id="hostUploaderName" required placeholder="Your name (e.g. Alex)" class="w-full p-3.5 theme-input rounded-xl font-semibold text-sm outline-none border" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider mb-1.5" style="color: var(--text-sub);">Currency</label>
+                <select id="uploadCurrencySelect" class="w-full p-3.5 theme-input rounded-xl font-bold text-sm outline-none border">
+                  <option value="INR">₹ INR (Indian Rupee)</option>
+                  <option value="USD">$ USD (US Dollar)</option>
+                  <option value="EUR">€ EUR (Euro)</option>
+                  <option value="GBP">£ GBP (British Pound)</option>
+                  <option value="AED">د.إ AED (UAE Dirham)</option>
+                  <option value="CAD">C$ CAD (Canadian Dollar)</option>
+                  <option value="SGD">S$ SGD (Singapore Dollar)</option>
+                  <option value="AUD">A$ AUD (Australian Dollar)</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -346,29 +409,59 @@
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Receipt Active
             </div>
             <h2 class="text-2xl font-black" style="color: var(--text-heading);">Receipt Ready to Split!</h2>
-            <p class="text-xs max-w-sm mx-auto" style="color: var(--text-sub);">Share this code with your group or send them the direct link:</p>
+            <p class="text-xs max-w-sm mx-auto" style="color: var(--text-sub);">Share this 6-character private code with your group or send via WhatsApp:</p>
             
-            <div class="border-2 rounded-3xl py-5 px-8 inline-block shadow-lg" style="background: var(--bg-sub); border-color: var(--border-glow);">
-              <p class="text-xs uppercase font-bold tracking-widest mb-1 text-purple-500">Receipt Code</p>
+            <div class="border-2 rounded-3xl py-4 px-8 inline-block shadow-lg" style="background: var(--bg-sub); border-color: var(--border-glow);">
+              <p class="text-[10px] uppercase font-bold tracking-widest mb-1 text-purple-400">Private Join Code</p>
               <span id="displayReceiptCode" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-purple-600 dark:text-purple-200"></span>
             </div>
 
-            <div class="flex items-center justify-center gap-2 pt-2 max-w-md mx-auto">
-              <button onclick="shareDirectReceiptLink()" class="flex-1 flex items-center justify-center gap-2 lavender-glow-btn text-white px-4 py-2.5 rounded-xl font-bold text-xs">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                Share via WhatsApp / App
+            <!-- Share & Export Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-2 pt-2 max-w-md mx-auto">
+              <button onclick="shareOnWhatsApp()" class="flex-1 min-w-[150px] flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-md">
+                <span>💬 WhatsApp Summary</span>
               </button>
-              <button onclick="copyDirectReceiptLink()" class="border px-3.5 py-2.5 rounded-xl font-bold text-xs transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-sub);">
-                Copy Link
+              <button onclick="copyFormattedReceiptText()" class="border px-3 py-2.5 rounded-xl font-bold text-xs transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                📋 Copy Text
+              </button>
+              <button onclick="printOrExportReceipt()" class="border px-3 py-2.5 rounded-xl font-bold text-xs transition" style="background: var(--bg-sub); border-color: var(--border-sub); color: var(--text-body);">
+                🖨️ PDF / Print
               </button>
             </div>
+          </div>
+
+          <!-- Upfront Payers Card in Host Section -->
+          <div class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
+            <div class="flex items-center gap-2.5 truncate">
+              <div class="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-base shrink-0">
+                💳
+              </div>
+              <div class="truncate">
+                <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Bill Paid Upfront By</p>
+                <p id="hostPayerNamesDisplay" class="text-xs font-bold truncate" style="color: var(--text-heading);">Host</p>
+              </div>
+            </div>
+            <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 px-3 py-1.5 rounded-xl border text-xs font-bold text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+              <span>Manage Payers</span> ⚙️
+            </button>
+          </div>
+
+          <!-- Tax & Tip Controls Pill -->
+          <div class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
+            <div>
+              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Tax, Tip & Service Charge</p>
+              <p id="hostTaxTipSummaryDisplay" class="text-xs font-bold" style="color: var(--text-heading);">Tax: ₹0.00 • Tip: ₹0.00 (Proportional)</p>
+            </div>
+            <button type="button" onclick="openTaxTipModal(activeReceiptId)" class="shrink-0 px-3 py-1.5 rounded-xl border text-xs font-bold text-purple-300 hover:brightness-110 transition" style="background: var(--bg-chip); border-color: var(--border-main);">
+              Edit Tax & Tip 🧾
+            </button>
           </div>
 
           <div class="border-t pt-6 space-y-3" style="border-color: var(--border-sub);">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="font-bold text-base" style="color: var(--text-heading);">Live Who-Owes-What & UPI</h3>
-                <p class="text-[11px]" style="color: var(--text-sub);">Track payments or pay host directly via UPI</p>
+                <h3 class="font-bold text-base" style="color: var(--text-heading);">Live Who-Owes-What & Smart Settlements</h3>
+                <p class="text-[11px]" style="color: var(--text-sub);">Track simplified balances or pay directly via UPI</p>
               </div>
               <button onclick="fetchSummary(activeReceiptId, 'liveSummaryList')" class="text-xs font-bold flex items-center gap-1 border px-3 py-1.5 rounded-xl transition" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -386,9 +479,9 @@
               <div>
                 <div class="flex items-center gap-2">
                   <h2 id="receiptStoreTitle" class="text-xl sm:text-2xl font-black" style="color: var(--text-heading);">Store Receipt</h2>
-                  <span id="receiptCodeBadge" class="border text-xs font-bold px-2.5 py-1 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">#0</span>
+                  <span id="receiptCodeBadge" class="border text-xs font-mono font-bold px-2.5 py-1 rounded-md" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">#0</span>
                 </div>
-                <p class="text-xs mt-0.5" style="color: var(--text-sub);">Select your portion (/2, /3, /4, Full) for each product.</p>
+                <p class="text-xs mt-0.5" style="color: var(--text-sub);">Select your portion (/2, /3, /4, Full) for each item.</p>
               </div>
               <div class="px-4 py-2 rounded-2xl border text-left sm:text-right" style="background: var(--bg-sub); border-color: var(--border-sub);">
                 <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Bill</p>
@@ -396,10 +489,32 @@
               </div>
             </div>
 
+            <!-- Upfront Payers Banner in Items Section -->
+            <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
+              <div class="flex items-center gap-2 truncate">
+                <span class="text-purple-400 font-bold shrink-0">💳 Paid Upfront:</span>
+                <span id="itemsPayerSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Host</span>
+              </div>
+              <button type="button" onclick="openManagePayersModal(activeReceiptId)" class="shrink-0 text-[11px] font-bold text-purple-400 hover:underline">
+                Manage Payers
+              </button>
+            </div>
+
+            <!-- Tax & Tip Distribution Banner -->
+            <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
+              <div class="flex items-center gap-2 truncate">
+                <span class="text-purple-400 font-bold shrink-0">🧾 Tax & Tip:</span>
+                <span id="itemsTaxTipSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Tax: ₹0.00 • Tip: ₹0.00</span>
+              </div>
+              <button type="button" onclick="openTaxTipModal(activeReceiptId)" class="shrink-0 text-[11px] font-bold text-purple-400 hover:underline">
+                Configure Tax/Tip
+              </button>
+            </div>
+
             <!-- Estimated total summary pill with Pay Now Deeplink Button -->
             <div class="border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md" style="background: var(--bg-sub); border-color: var(--border-main);">
               <div>
-                <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total</p>
+                <p class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-sub);">Your Share Total (incl. Tax/Tip)</p>
                 <p id="personalEstimatedTotal" class="text-2xl font-black text-purple-600 dark:text-purple-200">₹0.00</p>
               </div>
               <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -413,8 +528,16 @@
               </div>
             </div>
 
-            <!-- List of items -->
-            <div id="itemsCardsContainer" class="space-y-3 pt-1"></div>
+            <!-- List of items with Add/Edit/Delete Controls -->
+            <div class="space-y-3 pt-1">
+              <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Bill Items</span>
+                <button type="button" onclick="openAddItemModal(activeReceiptId)" class="text-xs font-bold px-2.5 py-1 rounded-lg border text-purple-300 hover:brightness-110 transition flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+                  <span>+ Add Item</span>
+                </button>
+              </div>
+              <div id="itemsCardsContainer" class="space-y-3"></div>
+            </div>
           </div>
 
           <!-- PROMINENT FLOATING STICKY ACTION BAR FOR SAVE SHARES & PAY NOW -->
@@ -436,7 +559,26 @@
 
       </div>
 
-      <!-- ================= TAB 2: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
+      <!-- ================= TAB 2: GROUPS / TRIPS AGGREGATOR ================= -->
+      <div id="tab-groups" class="hidden space-y-5 animate-fade pb-16">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-black" style="color: var(--text-heading);">Trips & Groups</h2>
+            <p class="text-xs" style="color: var(--text-sub);">Multi-receipt consolidated debt simplification for weekend trips.</p>
+          </div>
+          <button onclick="openCreateGroupModal()" class="lavender-glow-btn text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1 shadow-md">
+            <span>+ New Trip</span>
+          </button>
+        </div>
+
+        <div id="groupsListContainer" class="space-y-4">
+          <div class="p-8 text-center font-medium app-card rounded-3xl" style="color: var(--text-sub);">
+            Loading your trips & groups...
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: HISTORY (EXPENSE MEMORY & RETRIEVAL) ================= -->
       <div id="tab-history" class="hidden space-y-5 animate-fade pb-16">
         <div class="flex items-center justify-between">
           <div>
@@ -456,7 +598,7 @@
         </div>
       </div>
 
-      <!-- ================= TAB 3: PROFILE / ACCOUNT & UPI SETTINGS ================= -->
+      <!-- ================= TAB 4: PROFILE / ACCOUNT & UPI SETTINGS ================= -->
       <div id="tab-profile" class="hidden space-y-5 animate-fade pb-16">
         <h2 class="text-2xl font-black" style="color: var(--text-heading);">My Account & UPI</h2>
         
@@ -483,7 +625,25 @@
             </div>
           </div>
 
-          <!-- ================= UPI PAYMENT SETTINGS CARD ================= -->
+          <!-- Preferred Currency Selector -->
+          <div class="p-4 rounded-2xl border flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-sub);">
+            <div>
+              <p class="text-xs font-bold" style="color: var(--text-heading);">Default Currency</p>
+              <p class="text-[11px]" style="color: var(--text-sub);">Preferred currency for new splits</p>
+            </div>
+            <select id="profileCurrencySelect" onchange="updateUserDefaultCurrency(this.value)" class="text-xs font-bold p-2 rounded-xl border outline-none theme-input">
+              <option value="INR">₹ INR (Indian Rupee)</option>
+              <option value="USD">$ USD (US Dollar)</option>
+              <option value="EUR">€ EUR (Euro)</option>
+              <option value="GBP">£ GBP (British Pound)</option>
+              <option value="AED">د.إ AED (UAE Dirham)</option>
+              <option value="CAD">C$ CAD (Canadian Dollar)</option>
+              <option value="SGD">S$ SGD (Singapore Dollar)</option>
+              <option value="AUD">A$ AUD (Australian Dollar)</option>
+            </select>
+          </div>
+
+          <!-- UPI PAYMENT SETTINGS CARD -->
           <div class="p-5 rounded-3xl border-2 space-y-4 shadow-lg" style="background: var(--bg-sub); border-color: var(--border-glow);">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
@@ -539,6 +699,324 @@
     </div>
   </main>
 
+  <!-- ================= MANUAL BILL CREATION MODAL ================= -->
+  <div id="manualBillModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="app-card w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-teal-600/20 text-teal-400 flex items-center justify-center font-bold text-base">
+            📝
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold" style="color: var(--text-heading);">Create Manual Bill</h3>
+            <p class="text-[11px]" style="color: var(--text-sub);">Add items and prices directly without photo</p>
+          </div>
+        </div>
+        <button onclick="closeManualBillModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <form onsubmit="handleManualBillSubmit(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Store / Restaurant Name</label>
+            <input type="text" id="manualStoreName" required placeholder="e.g. Olive Garden" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Currency</label>
+            <select id="manualCurrency" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
+              <option value="INR">₹ INR (Indian Rupee)</option>
+              <option value="USD">$ USD (US Dollar)</option>
+              <option value="EUR">€ EUR (Euro)</option>
+              <option value="GBP">£ GBP (British Pound)</option>
+              <option value="AED">د.إ AED (UAE Dirham)</option>
+              <option value="CAD">C$ CAD (Canadian Dollar)</option>
+              <option value="SGD">S$ SGD (Singapore Dollar)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Items Container -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Bill Items</span>
+            <button type="button" onclick="addManualItemRow()" class="text-[11px] font-bold text-teal-400 hover:underline">+ Add Item Row</button>
+          </div>
+          <div id="manualItemsRowsContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- Tax & Tip Inputs -->
+        <div class="p-3 rounded-2xl border space-y-2.5" style="background: var(--bg-sub); border-color: var(--border-sub);">
+          <span class="text-[11px] font-bold text-purple-400">Additional Charges (Optional)</span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Tax Amount</label>
+              <input type="number" step="0.01" min="0" id="manualTaxInput" placeholder="0.00" oninput="calculateManualGrandTotal()" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Tip / Service</label>
+              <input type="number" step="0.01" min="0" id="manualTipInput" placeholder="0.00" oninput="calculateManualGrandTotal()" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold" style="color: var(--text-dim);">Split Method</label>
+              <select id="manualTaxSplitMethod" class="w-full p-2 theme-input rounded-lg text-xs font-bold outline-none border">
+                <option value="proportional">Proportional</option>
+                <option value="equal">Equal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Sum Display -->
+        <div class="flex items-center justify-between p-3 rounded-2xl border" style="background: var(--bg-chip); border-color: var(--border-main);">
+          <span class="text-xs font-bold" style="color: var(--text-sub);">Calculated Total Bill:</span>
+          <span id="manualGrandTotalDisplay" class="text-lg font-black text-teal-400">₹0.00</span>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button type="submit" id="createManualBillBtn" class="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:brightness-110 text-white rounded-xl font-bold text-xs shadow-lg">
+            Create Bill & Start Splitting 🚀
+          </button>
+          <button type="button" onclick="closeManualBillModal()" class="w-full py-2 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD / EDIT ITEM MODAL ================= -->
+  <div id="itemEditorModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <h3 id="itemEditorTitle" class="text-base font-bold" style="color: var(--text-heading);">Edit Item</h3>
+        <button onclick="closeItemEditorModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <form onsubmit="handleItemEditorSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Item Name</label>
+          <input type="text" id="editorItemNameInput" required placeholder="e.g. Paneer Butter Masala" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Price</label>
+          <input type="number" step="0.01" min="0" id="editorItemPriceInput" required placeholder="0.00" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border" />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <button type="submit" id="saveItemEditorBtn" class="w-full py-2.5 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
+            Save Item
+          </button>
+          <button type="button" onclick="closeItemEditorModal()" class="w-full py-2 border rounded-xl text-xs font-bold" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= TAX & TIP SETTINGS MODAL ================= -->
+  <div id="taxTipModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-sm rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🧾</span>
+          <h3 class="text-base font-bold" style="color: var(--text-heading);">Tax & Tip Settings</h3>
+        </div>
+        <button onclick="closeTaxTipModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <form onsubmit="handleTaxTipSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">GST / Sales Tax Amount</label>
+          <input type="number" step="0.01" min="0" id="taxModalTaxInput" placeholder="0.00" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Tip / Service Charge Amount</label>
+          <input type="number" step="0.01" min="0" id="taxModalTipInput" placeholder="0.00" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Distribution Method</label>
+          <select id="taxModalMethodSelect" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
+            <option value="proportional">Proportional to Items (Fair for different spenders)</option>
+            <option value="equal">Equal Split (Split evenly among participants)</option>
+          </select>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <button type="submit" id="saveTaxTipBtn" class="w-full py-2.5 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
+            Update Tax & Tip Split
+          </button>
+          <button type="button" onclick="closeTaxTipModal()" class="w-full py-2 border rounded-xl text-xs font-bold" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= CREATE TRIP / GROUP MODAL ================= -->
+  <div id="createGroupModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="app-card w-full max-w-md rounded-3xl p-6 space-y-4 animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🏖️</span>
+          <h3 class="text-base sm:text-lg font-bold" style="color: var(--text-heading);">Create New Trip / Group</h3>
+        </div>
+        <button onclick="closeCreateGroupModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <form onsubmit="handleCreateGroupSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Trip Name</label>
+          <input type="text" id="groupNameInput" required placeholder="e.g. Goa Weekend 2026, Flat 402 Expenses" class="w-full p-2.5 theme-input rounded-xl text-xs font-semibold outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Description (Optional)</label>
+          <input type="text" id="groupDescInput" placeholder="e.g. Hotel, food, fuel & beach activities" class="w-full p-2.5 theme-input rounded-xl text-xs font-medium outline-none border" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Trip Currency</label>
+          <select id="groupCurrencyInput" class="w-full p-2.5 theme-input rounded-xl text-xs font-bold outline-none border">
+            <option value="INR">₹ INR (Indian Rupee)</option>
+            <option value="USD">$ USD (US Dollar)</option>
+            <option value="EUR">€ EUR (Euro)</option>
+            <option value="GBP">£ GBP (British Pound)</option>
+            <option value="AED">د.إ AED (UAE Dirham)</option>
+            <option value="CAD">C$ CAD (Canadian Dollar)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider mb-1" style="color: var(--text-sub);">Select Group Members</label>
+          <div id="groupMembersChecklist" class="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl border" style="background: var(--bg-sub); border-color: var(--border-sub);"></div>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button type="submit" id="saveGroupBtn" class="w-full py-3 lavender-glow-btn text-white rounded-xl font-bold text-xs shadow-md">
+            Create Trip & Start Adding Bills 🏖️
+          </button>
+          <button type="button" onclick="closeCreateGroupModal()" class="w-full py-2 border rounded-xl text-xs font-bold" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= GROUP / TRIP DETAILS MODAL ================= -->
+  <div id="groupDetailsModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="app-card w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🏖️</span>
+            <h3 id="groupModalTitle" class="text-lg sm:text-xl font-bold" style="color: var(--text-heading);">Goa Trip</h3>
+          </div>
+          <p id="groupModalSubtitle" class="text-xs" style="color: var(--text-sub);"></p>
+        </div>
+        <button onclick="closeGroupDetailsModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <!-- Stats Bar & Actions -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3.5 rounded-2xl border" style="background: var(--bg-sub); border-color: var(--border-sub);">
+          <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Total Trip Spend</p>
+          <p id="groupModalTotalSpend" class="text-2xl font-black text-emerald-400">₹0.00</p>
+        </div>
+        <div class="p-3.5 rounded-2xl border flex flex-col justify-between" style="background: var(--bg-sub); border-color: var(--border-sub);">
+          <p class="text-[10px] uppercase font-bold" style="color: var(--text-dim);">Trip Bills Count</p>
+          <p id="groupModalReceiptCount" class="text-2xl font-black" style="color: var(--text-heading);">0</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap gap-2">
+        <button onclick="openAddReceiptToGroupModal()" class="flex-1 py-2 px-3 lavender-glow-btn text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1">
+          <span>+ Add Bill to Trip</span>
+        </button>
+        <button onclick="shareGroupWhatsAppSummary()" class="py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md">
+          <span>💬 WhatsApp Trip Report</span>
+        </button>
+      </div>
+
+      <!-- Receipts in Group -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-sub);">Receipts in this Trip</h4>
+        <div id="groupReceiptsListContainer" class="space-y-2"></div>
+      </div>
+
+      <!-- Consolidated Smart Transfers -->
+      <div class="space-y-2 pt-2 border-t" style="border-color: var(--border-sub);">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Consolidated Trip Settlements</h4>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-950/60 text-emerald-300 border-emerald-500/40">Multi-Bill Simplified</span>
+        </div>
+        <div id="groupConsolidatedTransfersContainer" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MANAGE PAYERS MODAL ================= -->
+  <div id="managePayersModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="app-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl border-2 border-purple-500/40">
+      <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-sub);">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-base">
+            💳
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold" style="color: var(--text-heading);">Who Paid the Bill?</h3>
+            <p class="text-[11px]" style="color: var(--text-sub);">Split upfront bill among multiple payers</p>
+          </div>
+        </div>
+        <button onclick="closeManagePayersModal()" class="w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-heading);">✕</button>
+      </div>
+
+      <!-- Bill Total & Status Bar -->
+      <div class="p-3.5 rounded-2xl border flex items-center justify-between" style="background: var(--bg-sub); border-color: var(--border-sub);">
+        <div>
+          <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Total Bill Amount</p>
+          <p id="payersModalBillTotal" class="text-xl font-black" style="color: var(--text-heading);">₹0.00</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Total Entered</p>
+          <p id="payersModalTotalEntered" class="text-xl font-black text-purple-400">₹0.00</p>
+        </div>
+      </div>
+
+      <!-- Match Alert Banner -->
+      <div id="payersMatchAlert" class="px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between border"></div>
+
+      <!-- Quick Action: Split Paid Equally -->
+      <div class="flex items-center justify-between gap-2 pt-1">
+        <span class="text-xs font-bold" style="color: var(--text-sub);">Payers List</span>
+        <button type="button" onclick="splitPaidAmountEqually()" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border text-purple-300 hover:brightness-110 transition shadow-sm flex items-center gap-1" style="background: var(--bg-chip); border-color: var(--border-main);">
+          <span>⚡ Split Paid Equally</span>
+        </button>
+      </div>
+
+      <!-- Dynamic Payers List Container -->
+      <div id="payersInputsContainer" class="space-y-2.5 max-h-56 overflow-y-auto pr-1"></div>
+
+      <!-- Add Payer Button -->
+      <div>
+        <button type="button" onclick="addNewPayerRow()" class="w-full py-2.5 border-2 border-dashed rounded-xl text-xs font-bold hover:border-purple-400 transition flex items-center justify-center gap-1.5" style="border-color: var(--border-main); color: var(--text-body); background: var(--bg-sub);">
+          <span>+ Add Another Payer</span>
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="space-y-2 pt-2 border-t" style="border-color: var(--border-sub);">
+        <button id="savePayersBtn" onclick="saveReceiptPayers()" class="w-full py-3 lavender-glow-btn text-white rounded-xl font-bold text-xs sm:text-sm shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5">
+          <span>Save Payers & Recalculate Split</span>
+        </button>
+        <button onclick="closeManagePayersModal()" class="w-full py-2 border rounded-xl text-xs font-bold transition hover:opacity-80" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= RECEIPT RETRIEVAL MODAL ================= -->
   <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="app-card w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto animate-slide-up shadow-2xl">
@@ -555,8 +1033,24 @@
           <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Total Bill</p>
           <p id="modalGrandTotal" class="text-xl font-black" style="color: var(--text-heading);">₹0.00</p>
         </div>
-        <button id="modalJoinBtn" onclick="openActiveReceiptFromModal()" class="lavender-glow-btn text-white px-4 py-2 rounded-xl text-xs font-bold">
-          Edit / Select Shares
+        <div class="flex items-center gap-2">
+          <button onclick="shareOnWhatsApp(modalReceiptId)" class="p-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs" title="Share WhatsApp">
+            💬
+          </button>
+          <button id="modalJoinBtn" onclick="openActiveReceiptFromModal()" class="lavender-glow-btn text-white px-4 py-2 rounded-xl text-xs font-bold">
+            Edit / Select Shares
+          </button>
+        </div>
+      </div>
+
+      <!-- Upfront Bill Payers Banner in Modal -->
+      <div class="flex items-center justify-between p-3 rounded-2xl border text-xs" style="background: var(--bg-sub); border-color: var(--border-sub);">
+        <div class="flex items-center gap-2 truncate">
+          <span class="text-purple-400 font-bold shrink-0">💳 Paid Upfront:</span>
+          <span id="modalPayerSummaryText" class="font-bold truncate" style="color: var(--text-heading);">Host</span>
+        </div>
+        <button type="button" onclick="openManagePayersModal(modalReceiptId)" class="shrink-0 text-[11px] font-bold text-purple-400 hover:underline">
+          Manage Payers
         </button>
       </div>
 
@@ -639,12 +1133,20 @@
     </div>
   </div>
 
+  <!-- PRINTABLE RECEIPT HIDDEN CONTAINER -->
+  <div id="printArea" class="hidden p-8 text-black"></div>
+
   <!-- ================= BOTTOM NAVIGATION BAR ================= -->
-  <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 theme-nav backdrop-blur-xl border-t px-6 py-2 shadow-2xl">
+  <nav id="appNav" class="hidden fixed bottom-0 left-0 right-0 z-40 theme-nav backdrop-blur-xl border-t px-4 py-2 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-around">
       <button onclick="switchTab('split')" id="navBtn-split" class="flex flex-col items-center gap-1 text-purple-600 dark:text-purple-400 py-1 transition font-bold">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
         <span class="text-[10px]">Split</span>
+      </button>
+
+      <button onclick="switchTab('groups')" id="navBtn-groups" class="flex flex-col items-center gap-1 py-1 transition font-medium opacity-60 hover:opacity-100" style="color: var(--text-sub);">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span class="text-[10px]">Trips/Groups</span>
       </button>
 
       <button onclick="switchTab('history')" id="navBtn-history" class="flex flex-col items-center gap-1 py-1 transition font-medium opacity-60 hover:opacity-100" style="color: var(--text-sub);">
@@ -663,19 +1165,53 @@
   <script>
     const API_BASE = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
-    const receiptParam = urlParams.get('receipt_id');
+    const receiptParam = urlParams.get('receipt_id') || urlParams.get('code');
+
+    const CURRENCY_SYMBOLS = {
+      'INR': '₹',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'AED': 'د.إ',
+      'CAD': 'C$',
+      'SGD': 'S$',
+      'AUD': 'A$',
+      'JPY': '¥',
+      'CHF': 'CHF'
+    };
 
     // State
     let currentTheme = localStorage.getItem('split_theme') || 'dark';
+    let currentCurrency = localStorage.getItem('split_currency') || 'INR';
     let currentUser = JSON.parse(localStorage.getItem('split_user') || 'null');
-    let activeReceiptId = receiptParam ? parseInt(receiptParam) : null;
+    let activeReceiptId = null;
     let activeReceiptData = null;
     let currentReceiptItems = [];
     let itemSharesState = {};
     let currentTab = 'split';
     let authMode = 'login';
-    let deferredPrompt = null;
     let currentQrUpiLink = '';
+
+    function getCurrencySym(code) {
+      return CURRENCY_SYMBOLS[(code || currentCurrency || 'INR').toUpperCase()] || '₹';
+    }
+
+    function formatCurrency(amount, code = null, sym = null) {
+      const s = sym || getCurrencySym(code);
+      return `${s}${parseFloat(amount || 0).toFixed(2)}`;
+    }
+
+    function changeGlobalCurrency(code) {
+      currentCurrency = code;
+      localStorage.setItem('split_currency', code);
+      const sym = getCurrencySym(code);
+      const logo = document.getElementById('appLogoBadge');
+      if (logo) logo.innerText = sym;
+      showToast(`Switched currency display to ${code} (${sym})`);
+      if (activeReceiptId) {
+        fetchSummary(activeReceiptId, 'liveSummaryList');
+      }
+    }
 
     // --- THEME MANAGEMENT ---
     function applyTheme(theme) {
@@ -712,10 +1248,12 @@
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme(currentTheme);
+      const curSelect = document.getElementById('globalCurrencySelect');
+      if (curSelect) curSelect.value = currentCurrency;
       checkAuthState();
 
       if (receiptParam && currentUser) {
-        loadReceiptForJoining(parseInt(receiptParam));
+        loadReceiptForJoining(receiptParam);
       }
     });
 
@@ -741,11 +1279,15 @@
         document.getElementById('profileUsernameText').innerText = `@${currentUser.username || 'user'}`;
         if (uploaderInput) uploaderInput.value = currentUser.name;
 
-        // Render UPI profile information
+        if (currentUser.default_currency) {
+          const profCur = document.getElementById('profileCurrencySelect');
+          if (profCur) profCur.value = currentUser.default_currency;
+        }
+
         renderProfileUpiState();
 
         if (receiptParam) {
-          loadReceiptForJoining(parseInt(receiptParam));
+          loadReceiptForJoining(receiptParam);
         }
       } else {
         authScreen.classList.remove('hidden');
@@ -811,6 +1353,22 @@
       }
     }
 
+    async function updateUserDefaultCurrency(code) {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(`${API_BASE}/auth/user/${currentUser.id}/currency`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ default_currency: code })
+        });
+        if (res.ok) {
+          currentUser.default_currency = code;
+          localStorage.setItem('split_user', JSON.stringify(currentUser));
+          changeGlobalCurrency(code);
+        }
+      } catch(e) {}
+    }
+
     function copyMyUpi() {
       if (currentUser && currentUser.upi_id) {
         navigator.clipboard.writeText(currentUser.upi_id);
@@ -819,14 +1377,14 @@
     }
 
     function showMyUpiQrModal() {
-      if (!currentUser || !currentUser.upi_id) return showToast('Set your UPI ID first', 'error');
+      if (!currentUser || !currentUser.upi_id) return showToast('Set your UPI ID first in profile', 'error');
       openUpiQrModal(currentUser.upi_id, currentUser.name, 0);
     }
 
     let currentQrPaymentState = null;
     let qrPollInterval = null;
 
-    function openUpiQrModal(upiId, payeeName, amount = 0, targetUserId = null) {
+    function openUpiQrModal(upiId, payeeName, amount = 0, targetUserId = null, payeeId = null) {
       const modal = document.getElementById('upiQrModal');
       const qrImg = document.getElementById('upiQrImage');
       const payeeEl = document.getElementById('qrPayeeName');
@@ -834,14 +1392,16 @@
       const upiText = document.getElementById('qrUpiIdText');
       const instantConfirmBtn = document.getElementById('qrInstantConfirmBtn');
       
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
       payeeEl.innerText = `Pay to: ${payeeName}`;
-      amtEl.innerText = amount > 0 ? `₹${amount.toFixed(2)}` : 'Custom Amount';
+      amtEl.innerText = amount > 0 ? `${sym}${amount.toFixed(2)}` : 'Custom Amount';
       upiText.innerText = upiId;
 
       const targetRecId = activeReceiptId || modalReceiptId;
       currentQrPaymentState = {
         receipt_id: targetRecId,
         user_id: targetUserId || (currentUser ? currentUser.id : 9999),
+        payee_id: payeeId,
         amount: amount,
         payee: payeeName
       };
@@ -849,21 +1409,20 @@
       if (instantConfirmBtn) {
         if (amount > 0) {
           instantConfirmBtn.classList.remove('hidden');
-          instantConfirmBtn.innerHTML = `<span>✅ Confirm & Mark Paid (₹${amount.toFixed(2)})</span>`;
+          instantConfirmBtn.innerHTML = `<span>✅ Confirm & Mark Paid (${sym}${amount.toFixed(2)})</span>`;
         } else {
           instantConfirmBtn.classList.add('hidden');
         }
       }
 
       const upiUri = amount > 0 
-        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('Split for Receipt #' + (targetRecId || ''))}&cu=INR`
+        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&tn=${encodeURIComponent('Split for Receipt #' + (activeReceiptData?.join_code || targetRecId || ''))}&cu=INR`
         : `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
 
       currentQrUpiLink = upiUri;
       qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
       modal.classList.remove('hidden');
 
-      // Live Polling while QR Modal is displayed
       if (qrPollInterval) clearInterval(qrPollInterval);
       if (amount > 0 && targetRecId) {
         qrPollInterval = setInterval(async () => {
@@ -871,7 +1430,8 @@
             const res = await fetch(`${API_BASE}/split/summary/${targetRecId}`);
             if (res.ok) {
               const summaryData = await res.json();
-              const userRow = summaryData.find(r => r.user_id === currentQrPaymentState.user_id);
+              const users = Array.isArray(summaryData) ? summaryData : (summaryData.users || []);
+              const userRow = users.find(r => r.user_id === currentQrPaymentState.user_id);
               if (userRow && userRow.is_paid) {
                 clearInterval(qrPollInterval);
                 qrPollInterval = null;
@@ -908,7 +1468,9 @@
         currentQrPaymentState.receipt_id,
         currentQrPaymentState.user_id,
         true,
-        currentQrPaymentState.amount
+        currentQrPaymentState.amount,
+        null,
+        currentQrPaymentState.payee_id
       );
 
       if (btn) {
@@ -941,7 +1503,7 @@
     function continueAsGuest() {
       const guestName = prompt('Enter your display name:', 'Guest');
       if (!guestName) return;
-      currentUser = { id: 9999, name: guestName, username: 'guest' };
+      currentUser = { id: 9999, name: guestName, username: 'guest', default_currency: 'INR' };
       localStorage.setItem('split_user', JSON.stringify(currentUser));
       checkAuthState();
       showToast(`Welcome, ${guestName}!`);
@@ -961,7 +1523,7 @@
         tabReg.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition opacity-70 hover:opacity-100';
         tabReg.style.color = 'var(--text-sub)';
         nameField.classList.add('hidden');
-        title.innerText = 'Sign In to SplitExpense';
+        title.innerText = 'Sign In to SmartSplit';
         submitBtn.innerText = 'Log In';
       } else {
         tabReg.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-purple-600 text-white shadow-md shadow-purple-900/40';
@@ -980,7 +1542,7 @@
       const name = document.getElementById('authNameInput').value.trim() || username;
 
       const endpoint = authMode === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
-      const payload = authMode === 'login' ? { username, password } : { name, username, password };
+      const payload = authMode === 'login' ? { username, password } : { name, username, password, default_currency: currentCurrency };
 
       const btn = document.getElementById('authSubmitBtn');
       btn.disabled = true;
@@ -1019,21 +1581,25 @@
     // --- TAB SWITCHING ---
     function switchTab(tab) {
       currentTab = tab;
-      ['split', 'history', 'profile'].forEach(t => {
+      ['split', 'groups', 'history', 'profile'].forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         const navBtn = document.getElementById(`navBtn-${t}`);
         if (t === tab) {
-          tabEl.classList.remove('hidden');
-          navBtn.className = 'flex flex-col items-center gap-1 text-purple-600 dark:text-purple-400 py-1 transition font-bold';
+          tabEl?.classList.remove('hidden');
+          if (navBtn) navBtn.className = 'flex flex-col items-center gap-1 text-purple-600 dark:text-purple-400 py-1 transition font-bold';
         } else {
-          tabEl.classList.add('hidden');
-          navBtn.className = 'flex flex-col items-center gap-1 py-1 transition font-medium opacity-60 hover:opacity-100';
-          navBtn.style.color = 'var(--text-sub)';
+          tabEl?.classList.add('hidden');
+          if (navBtn) {
+            navBtn.className = 'flex flex-col items-center gap-1 py-1 transition font-medium opacity-60 hover:opacity-100';
+            navBtn.style.color = 'var(--text-sub)';
+          }
         }
       });
 
       if (tab === 'history') {
         loadUserHistory();
+      } else if (tab === 'groups') {
+        loadUserGroups();
       }
     }
 
@@ -1061,6 +1627,7 @@
       e.preventDefault();
       const name = document.getElementById('hostUploaderName').value.trim();
       const fileInput = document.getElementById('receiptImageInput');
+      const currency = document.getElementById('uploadCurrencySelect')?.value || currentCurrency;
       const submitBtn = document.getElementById('uploadSubmitBtn');
       const spinner = document.getElementById('uploadSpinner');
       const btnText = document.getElementById('uploadBtnText');
@@ -1090,7 +1657,7 @@
 
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
-        const uploadRes = await fetch(`${API_BASE}/receipts/scan?uploader_id=${uploaderId}`, {
+        const uploadRes = await fetch(`${API_BASE}/receipts/scan?uploader_id=${uploaderId}&currency=${currency}`, {
           method: 'POST',
           body: formData
         });
@@ -1098,11 +1665,12 @@
         if (!uploadRes.ok) throw new Error(receipt.detail);
 
         activeReceiptId = receipt.id;
-        showToast('Receipt scanned successfully!');
+        activeReceiptData = receipt;
+        showToast('Receipt scanned successfully with Gemini AI!');
 
         document.getElementById('uploadSection').classList.add('hidden');
         document.getElementById('hostShareSection').classList.remove('hidden');
-        document.getElementById('displayReceiptCode').innerText = activeReceiptId;
+        document.getElementById('displayReceiptCode').innerText = receipt.join_code || receipt.id;
 
         renderItemsSelection(receipt);
         document.getElementById('itemsSection').classList.remove('hidden');
@@ -1117,20 +1685,266 @@
       }
     });
 
+    // --- MANUAL BILL CREATION ---
+    let manualItemCount = 0;
+    function openManualBillModal() {
+      manualItemCount = 0;
+      const container = document.getElementById('manualItemsRowsContainer');
+      container.innerHTML = '';
+      addManualItemRow('Item 1', '');
+      addManualItemRow('Item 2', '');
+      document.getElementById('manualTaxInput').value = '';
+      document.getElementById('manualTipInput').value = '';
+      document.getElementById('manualCurrency').value = currentCurrency;
+      calculateManualGrandTotal();
+      document.getElementById('manualBillModal').classList.remove('hidden');
+    }
+
+    function closeManualBillModal() {
+      document.getElementById('manualBillModal').classList.add('hidden');
+    }
+
+    function addManualItemRow(defaultName = '', defaultPrice = '') {
+      manualItemCount++;
+      const rowId = `manual-row-${manualItemCount}`;
+      const container = document.getElementById('manualItemsRowsContainer');
+      const div = document.createElement('div');
+      div.id = rowId;
+      div.className = 'flex items-center gap-2';
+      div.innerHTML = `
+        <input type="text" placeholder="Item Name (e.g. Pizza)" value="${defaultName}" class="manual-item-name flex-1 p-2 theme-input rounded-xl text-xs font-semibold outline-none border" required />
+        <input type="number" step="0.01" min="0" placeholder="Price" value="${defaultPrice}" oninput="calculateManualGrandTotal()" class="manual-item-price w-24 p-2 theme-input rounded-xl text-xs font-bold outline-none border text-right" required />
+        <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateManualGrandTotal();" class="w-7 h-7 rounded-lg border text-red-400 flex items-center justify-center font-bold text-xs hover:bg-red-500/20 transition">✕</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function calculateManualGrandTotal() {
+      const priceInputs = document.querySelectorAll('.manual-item-price');
+      let itemsSum = 0;
+      priceInputs.forEach(inp => {
+        itemsSum += parseFloat(inp.value) || 0;
+      });
+      const tax = parseFloat(document.getElementById('manualTaxInput').value) || 0;
+      const tip = parseFloat(document.getElementById('manualTipInput').value) || 0;
+      const total = itemsSum + tax + tip;
+      const cur = document.getElementById('manualCurrency')?.value || currentCurrency;
+      const sym = getCurrencySym(cur);
+      document.getElementById('manualGrandTotalDisplay').innerText = `${sym}${total.toFixed(2)}`;
+    }
+
+    async function handleManualBillSubmit(e) {
+      e.preventDefault();
+      const storeName = document.getElementById('manualStoreName').value.trim();
+      const currency = document.getElementById('manualCurrency').value;
+      const tax = parseFloat(document.getElementById('manualTaxInput').value) || 0;
+      const tip = parseFloat(document.getElementById('manualTipInput').value) || 0;
+      const splitMethod = document.getElementById('manualTaxSplitMethod').value;
+
+      const nameInputs = document.querySelectorAll('.manual-item-name');
+      const priceInputs = document.querySelectorAll('.manual-item-price');
+      const items = [];
+      for (let i = 0; i < nameInputs.length; i++) {
+        const n = nameInputs[i].value.trim();
+        const p = parseFloat(priceInputs[i].value) || 0;
+        if (n && p > 0) {
+          items.push({ item_name: n, price: p });
+        }
+      }
+
+      if (items.length === 0) {
+        return showToast('Add at least one item with a valid price', 'error');
+      }
+
+      const btn = document.getElementById('createManualBillBtn');
+      btn.disabled = true;
+      btn.innerText = 'Creating Bill...';
+
+      try {
+        const uploaderId = currentUser && currentUser.id !== 9999 ? currentUser.id : 1;
+        const res = await fetch(`${API_BASE}/receipts/manual`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uploader_id: uploaderId,
+            store_name: storeName,
+            currency: currency,
+            tax_amount: tax,
+            tip_amount: tip,
+            tax_split_method: splitMethod,
+            items: items
+          })
+        });
+
+        const receipt = await res.json();
+        if (!res.ok) throw new Error(receipt.detail || 'Could not create bill');
+
+        activeReceiptId = receipt.id;
+        activeReceiptData = receipt;
+        closeManualBillModal();
+        showToast('Manual Bill created successfully! 🚀');
+
+        document.getElementById('splitHomeSec').classList.add('hidden');
+        document.getElementById('hostShareSection').classList.remove('hidden');
+        document.getElementById('displayReceiptCode').innerText = receipt.join_code || receipt.id;
+
+        renderItemsSelection(receipt);
+        document.getElementById('itemsSection').classList.remove('hidden');
+        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Create Bill & Start Splitting 🚀';
+      }
+    }
+
+    // --- ITEM EDIT / ADD / DELETE LOGIC ---
+    let activeEditingItemId = null;
+    function openAddItemModal(receiptId) {
+      activeEditingItemId = null;
+      document.getElementById('itemEditorTitle').innerText = 'Add New Item';
+      document.getElementById('editorItemNameInput').value = '';
+      document.getElementById('editorItemPriceInput').value = '';
+      document.getElementById('itemEditorModal').classList.remove('hidden');
+    }
+
+    function openEditItemModal(itemId, name, price) {
+      activeEditingItemId = itemId;
+      document.getElementById('itemEditorTitle').innerText = 'Edit Item';
+      document.getElementById('editorItemNameInput').value = name;
+      document.getElementById('editorItemPriceInput').value = price;
+      document.getElementById('itemEditorModal').classList.remove('hidden');
+    }
+
+    function closeItemEditorModal() {
+      document.getElementById('itemEditorModal').classList.add('hidden');
+    }
+
+    async function handleItemEditorSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('editorItemNameInput').value.trim();
+      const price = parseFloat(document.getElementById('editorItemPriceInput').value) || 0;
+      if (!name || price <= 0) return showToast('Enter valid item name and price', 'error');
+
+      const btn = document.getElementById('saveItemEditorBtn');
+      btn.disabled = true;
+
+      try {
+        let res;
+        if (activeEditingItemId) {
+          res = await fetch(`${API_BASE}/receipts/${activeReceiptId}/items/${activeEditingItemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item_name: name, price: price })
+          });
+        } else {
+          res = await fetch(`${API_BASE}/receipts/${activeReceiptId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item_name: name, price: price })
+          });
+        }
+        const updatedReceipt = await res.json();
+        if (!res.ok) throw new Error(updatedReceipt.detail || 'Could not save item');
+
+        closeItemEditorModal();
+        showToast(activeEditingItemId ? 'Item updated!' : 'New item added!');
+        loadReceiptForJoining(activeReceiptId);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteReceiptItem(itemId, itemName) {
+      if (!confirm(`Are you sure you want to delete "${itemName}"?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/receipts/${activeReceiptId}/items/${itemId}`, {
+          method: 'DELETE'
+        });
+        const updatedReceipt = await res.json();
+        if (!res.ok) throw new Error(updatedReceipt.detail || 'Could not delete item');
+
+        showToast('Item deleted');
+        loadReceiptForJoining(activeReceiptId);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // --- TAX & TIP CONFIGURATION ---
+    function openTaxTipModal(receiptId) {
+      const data = activeReceiptData;
+      document.getElementById('taxModalTaxInput').value = data ? (data.tax_amount || '') : '';
+      document.getElementById('taxModalTipInput').value = data ? (data.tip_amount || '') : '';
+      document.getElementById('taxModalMethodSelect').value = data ? (data.tax_split_method || 'proportional') : 'proportional';
+      document.getElementById('taxTipModal').classList.remove('hidden');
+    }
+
+    function closeTaxTipModal() {
+      document.getElementById('taxTipModal').classList.add('hidden');
+    }
+
+    async function handleTaxTipSubmit(e) {
+      e.preventDefault();
+      const tax = parseFloat(document.getElementById('taxModalTaxInput').value) || 0;
+      const tip = parseFloat(document.getElementById('taxModalTipInput').value) || 0;
+      const method = document.getElementById('taxModalMethodSelect').value;
+
+      const btn = document.getElementById('saveTaxTipBtn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/receipts/${activeReceiptId}/tax-tip`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tax_amount: tax,
+            tip_amount: tip,
+            tax_split_method: method
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not update tax/tip');
+
+        closeTaxTipModal();
+        showToast('Tax & Tip updated and auto-distributed! ✅');
+        loadReceiptForJoining(activeReceiptId);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     // --- JOIN FLOW ---
     function joinByCode() {
       const code = document.getElementById('joinReceiptCodeInput').value.trim();
-      if (!code) return showToast('Please enter receipt code', 'error');
-      loadReceiptForJoining(parseInt(code));
+      if (!code) return showToast('Please enter receipt code or ID', 'error');
+      loadReceiptForJoining(code);
     }
 
-    async function loadReceiptForJoining(receiptId) {
-      activeReceiptId = receiptId;
+    async function loadReceiptForJoining(codeOrId) {
       try {
-        const res = await fetch(`${API_BASE}/receipts/${receiptId}`);
+        let endpoint = `${API_BASE}/receipts/${codeOrId}`;
+        // If string length is 6 and non-numeric, use code endpoint
+        if (typeof codeOrId === 'string' && isNaN(parseInt(codeOrId))) {
+          endpoint = `${API_BASE}/receipts/code/${codeOrId.toUpperCase()}`;
+        }
+        const res = await fetch(endpoint);
         const data = await res.json();
-        if (!res.ok) throw new Error('Receipt code not found');
+        if (!res.ok) {
+          // Fallback to code endpoint
+          const codeRes = await fetch(`${API_BASE}/receipts/code/${codeOrId}`);
+          if (codeRes.ok) {
+            return loadReceiptForJoining(await codeRes.json());
+          }
+          throw new Error('Receipt code or ID not found');
+        }
 
+        activeReceiptId = data.id;
         activeReceiptData = data;
         document.getElementById('splitHomeSec').classList.add('hidden');
         document.getElementById('uploadSection').classList.add('hidden');
@@ -1149,9 +1963,17 @@
     // --- ITEM SHARE LOGIC ---
     function renderItemsSelection(data) {
       activeReceiptData = data;
+      const sym = data.currency_symbol || getCurrencySym(data.currency);
+
       document.getElementById('receiptStoreTitle').innerText = data.store_name || 'Store Receipt';
-      document.getElementById('receiptCodeBadge').innerText = `#${data.id}`;
-      document.getElementById('receiptGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
+      document.getElementById('receiptCodeBadge').innerText = data.join_code ? `#${data.join_code}` : `#${data.id}`;
+      document.getElementById('receiptGrandTotal').innerText = `${sym}${parseFloat(data.total_amount).toFixed(2)}`;
+
+      const taxSummary = `Tax: ${sym}${parseFloat(data.tax_amount || 0).toFixed(2)} • Tip: ${sym}${parseFloat(data.tip_amount || 0).toFixed(2)} (${data.tax_split_method || 'proportional'})`;
+      const hostTaxEl = document.getElementById('hostTaxTipSummaryDisplay');
+      if (hostTaxEl) hostTaxEl.innerText = taxSummary;
+      const itemTaxEl = document.getElementById('itemsTaxTipSummaryText');
+      if (itemTaxEl) itemTaxEl.innerText = taxSummary;
 
       currentReceiptItems = data.items || [];
       itemSharesState = {};
@@ -1160,7 +1982,7 @@
       container.innerHTML = '';
 
       if (currentReceiptItems.length === 0) {
-        container.innerHTML = '<div class="p-6 text-center font-medium" style="color: var(--text-sub);">No items found on receipt.</div>';
+        container.innerHTML = '<div class="p-6 text-center font-medium" style="color: var(--text-sub);">No items found. Click "+ Add Item" above to add bill items.</div>';
         updateEstimate();
         return;
       }
@@ -1178,10 +2000,14 @@
           <div class="flex items-center justify-between gap-2">
             <div>
               <p class="font-bold text-base" style="color: var(--text-heading);">${item.item_name}</p>
-              <p class="text-xs font-semibold" style="color: var(--text-sub);">Total: ₹${parseFloat(item.price).toFixed(2)}</p>
+              <p class="text-xs font-semibold" style="color: var(--text-sub);">Total: ${sym}${parseFloat(item.price).toFixed(2)}</p>
             </div>
-            <div id="cost-badge-${item.id}" class="px-2.5 py-1 rounded-xl text-xs font-bold border" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-sub);">
-              ₹0.00
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="openEditItemModal(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.price})" class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs text-purple-400 hover:bg-purple-500/20" title="Edit Item">✏️</button>
+              <button type="button" onclick="deleteReceiptItem(${item.id}, '${item.item_name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs text-red-400 hover:bg-red-500/20" title="Delete Item">🗑️</button>
+              <div id="cost-badge-${item.id}" class="px-2.5 py-1 rounded-xl text-xs font-bold border" style="background: var(--bg-chip); border-color: var(--border-sub); color: var(--text-sub);">
+                ${sym}0.00
+              </div>
             </div>
           </div>
 
@@ -1259,6 +2085,7 @@
       const item = currentReceiptItems.find(i => i.id === itemId);
       if (!state || !item) return;
 
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
       const card = document.getElementById(`item-card-${itemId}`);
       const badge = document.getElementById(`cost-badge-${itemId}`);
       const stepper = document.getElementById(`custom-stepper-${itemId}`);
@@ -1298,38 +2125,53 @@
         badge.style.background = 'var(--bg-chip)';
         badge.style.borderColor = 'var(--border-sub)';
         badge.style.color = 'var(--text-sub)';
-        badge.innerText = '₹0.00';
+        badge.innerText = `${sym}0.00`;
       } else {
         card.style.background = 'var(--bg-chip)';
         card.style.borderColor = '#A855F7';
         badge.className = 'px-2.5 py-1 rounded-xl bg-purple-600 text-white text-xs font-bold shadow-md';
-        badge.innerText = `₹${cost.toFixed(2)}`;
+        badge.innerText = `${sym}${cost.toFixed(2)}`;
       }
     }
 
     function updateEstimate() {
-      let total = 0;
+      let itemsTotal = 0;
       let count = 0;
       currentReceiptItems.forEach(item => {
         const s = itemSharesState[item.id];
         if (s && s.fraction > 0) {
-          total += item.price * s.fraction;
+          itemsTotal += item.price * s.fraction;
           count++;
         }
       });
-      const formatted = `₹${total.toFixed(2)}`;
+
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
+      
+      // Add proportional tax/tip estimate
+      let taxTipShare = 0;
+      if (activeReceiptData) {
+        const allItemsSum = currentReceiptItems.reduce((acc, i) => acc + parseFloat(i.price || 0), 0);
+        const extra = parseFloat(activeReceiptData.tax_amount || 0) + parseFloat(activeReceiptData.tip_amount || 0);
+        if (extra > 0 && itemsTotal > 0) {
+          if (activeReceiptData.tax_split_method === 'equal') {
+            taxTipShare = extra / 2; // rough estimate
+          } else if (allItemsSum > 0) {
+            taxTipShare = (itemsTotal / allItemsSum) * extra;
+          }
+        }
+      }
+
+      const totalWithTax = itemsTotal + taxTipShare;
+      const formatted = `${sym}${totalWithTax.toFixed(2)}`;
       document.getElementById('personalEstimatedTotal').innerText = formatted;
       document.getElementById('personalSelectedCount').innerText = count;
       document.getElementById('saveSharesBtnBadge').innerText = formatted;
 
       const calcPayBtn = document.getElementById('payCalculatedShareBtn');
       const stickyPayBtn = document.getElementById('stickyPayNowBtn');
-
-      // Check if current user is the host/creator of the active receipt
       const isHost = (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id);
 
-      // Only show Pay Now button if total > 0 AND the user is NOT the host
-      if (total > 0 && !isHost) {
+      if (itemsTotal > 0 && !isHost) {
         if (calcPayBtn) {
           calcPayBtn.classList.remove('hidden');
           calcPayBtn.innerHTML = `<span>⚡ Pay ${formatted}</span>`;
@@ -1344,8 +2186,49 @@
       }
     }
 
+    async function submitPersonalShares() {
+      if (!currentUser) return showToast('Please sign in first', 'error');
+
+      const sharesPayload = [];
+      Object.keys(itemSharesState).forEach(itemId => {
+        const s = itemSharesState[itemId];
+        if (s.fraction > 0) {
+          sharesPayload.push({
+            item_id: parseInt(itemId),
+            fraction: s.fraction
+          });
+        }
+      });
+
+      const btn = document.getElementById('saveSharesBtn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/split/assign-user-shares`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receipt_id: activeReceiptId,
+            user_id: currentUser.id,
+            shares: sharesPayload
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not save shares');
+
+        showToast('Your item shares were saved in database! ✅');
+        document.getElementById('hostShareSection').classList.remove('hidden');
+        document.getElementById('displayReceiptCode').innerText = activeReceiptData?.join_code || activeReceiptId;
+        fetchSummary(activeReceiptId, 'liveSummaryList');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     async function payCalculatedTotalNow() {
-      // Check if user is host
       if (currentUser && activeReceiptData && currentUser.id === activeReceiptData.uploader_id) {
         return showToast('You are the host who paid the bill! Other participants will pay to your UPI.', 'error');
       }
@@ -1362,16 +2245,6 @@
         return showToast('Please select at least one item portion first', 'error');
       }
 
-      // If activeReceiptData is missing or missing uploader_upi_id, attempt to fetch fresh details
-      if (!activeReceiptData || !activeReceiptData.uploader_upi_id) {
-        try {
-          const recRes = await fetch(`${API_BASE}/receipts/${activeReceiptId}`);
-          if (recRes.ok) {
-            activeReceiptData = await recRes.json();
-          }
-        } catch (e) {}
-      }
-
       const hostUpi = activeReceiptData?.uploader_upi_id || (currentUser && currentUser.id === activeReceiptData?.uploader_id ? currentUser.upi_id : null);
       const hostName = activeReceiptData?.uploader_name || 'Receipt Host';
       const storeName = activeReceiptData?.store_name || 'Bill';
@@ -1381,12 +2254,10 @@
         return;
       }
 
-      // Auto save shares in background so calculations are preserved
       if (currentUser) {
         submitPersonalShares().catch(() => {});
       }
 
-      // Set pending payment state for automatic return detection
       sessionStorage.setItem('pending_upi_payment', JSON.stringify({
         receipt_id: activeReceiptId,
         user_id: currentUser ? currentUser.id : 9999,
@@ -1395,58 +2266,297 @@
         timestamp: Date.now()
       }));
 
-      // Construct UPI Deeplink URI
       const formattedAmount = total.toFixed(2);
-      const note = `Split for ${storeName} (#${activeReceiptId})`;
+      const note = `Split for ${storeName} (#${activeReceiptData?.join_code || activeReceiptId})`;
       const upiDeepLink = `upi://pay?pa=${encodeURIComponent(hostUpi)}&pn=${encodeURIComponent(hostName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       if (isMobile) {
-        // Direct Deeplink trigger for UPI Apps (GPay, PhonePe, Paytm, Cred, etc.)
         window.location.href = upiDeepLink;
       } else {
-        // Desktop / Laptop Fallback to QR Scanner Modal
         openUpiQrModal(hostUpi, hostName, total);
       }
     }
 
-    async function submitPersonalShares() {
-      if (!currentUser) {
-        checkAuthState();
+    // --- 1-TAP WHATSAPP & CLIPBOARD EXPORT GENERATOR ---
+    async function getFormattedSummaryData(receiptId) {
+      const [sumRes, recRes] = await Promise.all([
+        fetch(`${API_BASE}/split/summary/${receiptId}`),
+        fetch(`${API_BASE}/receipts/${receiptId}`)
+      ]);
+      const summary = await sumRes.json();
+      const receipt = await recRes.json();
+      return { summary, receipt };
+    }
+
+    async function shareOnWhatsApp(receiptId = null) {
+      const targetId = receiptId || activeReceiptId;
+      if (!targetId) return showToast('No active receipt found', 'error');
+
+      try {
+        const { summary, receipt } = await getFormattedSummaryData(targetId);
+        const sym = receipt.currency_symbol || getCurrencySym(receipt.currency);
+        const joinLink = `${window.location.origin}/?code=${receipt.join_code || receipt.id}`;
+
+        let text = `🧾 *${receipt.store_name || 'Store Bill'}* (Code: *${receipt.join_code || receipt.id}*)\n`;
+        text += `💰 *Total Bill:* ${sym}${parseFloat(receipt.total_amount).toFixed(2)}\n`;
+        if (receipt.tax_amount > 0 || receipt.tip_amount > 0) {
+          text += `📊 *Tax & Tip:* ${sym}${(parseFloat(receipt.tax_amount||0) + parseFloat(receipt.tip_amount||0)).toFixed(2)}\n`;
+        }
+        text += `💳 *Paid Upfront by:* ${summary.payers.map(p => `${p.user_name} (${sym}${p.amount_paid.toFixed(2)})`).join(', ')}\n\n`;
+
+        text += `💸 *Smart Transfers (Who Pays Whom):*\n`;
+        if (summary.transfers && summary.transfers.length > 0) {
+          summary.transfers.forEach(t => {
+            const upiNote = t.to_user_upi ? ` [UPI: ${t.to_user_upi}]` : '';
+            const status = t.is_paid ? '✅ Paid' : '⏳ Pending';
+            text += `👉 *${t.from_user_name}* ➔ *${t.to_user_name}*: ${sym}${t.amount.toFixed(2)}${upiNote} (${status})\n`;
+          });
+        } else {
+          text += `🎉 All settled up!\n`;
+        }
+
+        text += `\n🔗 *Select Your Shares & Settle:* ${joinLink}`;
+
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank');
+      } catch (err) {
+        showToast(`Failed to generate WhatsApp summary: ${err.message}`, 'error');
+      }
+    }
+
+    async function copyFormattedReceiptText(receiptId = null) {
+      const targetId = receiptId || activeReceiptId;
+      if (!targetId) return showToast('No active receipt found', 'error');
+
+      try {
+        const { summary, receipt } = await getFormattedSummaryData(targetId);
+        const sym = receipt.currency_symbol || getCurrencySym(receipt.currency);
+        const joinLink = `${window.location.origin}/?code=${receipt.join_code || receipt.id}`;
+
+        let text = `==============================\n`;
+        text += `🧾 ${receipt.store_name || 'Store Bill'} (Code: ${receipt.join_code || receipt.id})\n`;
+        text += `Total Bill: ${sym}${parseFloat(receipt.total_amount).toFixed(2)}\n`;
+        text += `Paid Upfront: ${summary.payers.map(p => `${p.user_name} (${sym}${p.amount_paid.toFixed(2)})`).join(', ')}\n`;
+        text += `------------------------------\n`;
+        text += `SMART SETTLEMENTS:\n`;
+        if (summary.transfers && summary.transfers.length > 0) {
+          summary.transfers.forEach(t => {
+            text += `• ${t.from_user_name} pays ${t.to_user_name}: ${sym}${t.amount.toFixed(2)}${t.to_user_upi ? ` (UPI: ${t.to_user_upi})` : ''} - ${t.is_paid ? 'PAID' : 'PENDING'}\n`;
+          });
+        }
+        text += `------------------------------\n`;
+        text += `Join Link: ${joinLink}\n`;
+        text += `==============================\n`;
+
+        await navigator.clipboard.writeText(text);
+        showToast('Receipt summary copied to clipboard! 📋');
+      } catch(err) {
+        showToast('Could not copy summary', 'error');
+      }
+    }
+
+    async function printOrExportReceipt(receiptId = null) {
+      const targetId = receiptId || activeReceiptId;
+      if (!targetId) return showToast('No active receipt found', 'error');
+
+      try {
+        const { summary, receipt } = await getFormattedSummaryData(targetId);
+        const sym = receipt.currency_symbol || getCurrencySym(receipt.currency);
+        const printDiv = document.getElementById('printArea');
+
+        let rowsHtml = summary.users.map(u => `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><b>${u.user_name}</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${sym}${u.amount_paid.toFixed(2)}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${sym}${u.consumed_cost.toFixed(2)}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">${u.net_balance >= 0 ? `+${sym}${u.net_balance.toFixed(2)}` : `-${sym}${Math.abs(u.net_balance).toFixed(2)}`}</td>
+          </tr>
+        `).join('');
+
+        let transfersHtml = summary.transfers.map(t => `
+          <div style="padding: 6px 0; border-bottom: 1px dashed #ccc;">
+            <b>${t.from_user_name}</b> pays <b>${t.to_user_name}</b>: <span style="font-weight: bold;">${sym}${t.amount.toFixed(2)}</span> ${t.is_paid ? '✅ [Paid]' : '⏳ [Pending]'}
+          </div>
+        `).join('');
+
+        printDiv.innerHTML = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #000; padding: 20px;">
+            <h1 style="font-size: 24px; font-weight: 900; margin-bottom: 4px;">SmartSplit Receipt</h1>
+            <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Store: <b>${receipt.store_name}</b> • Code: <b>#${receipt.join_code || receipt.id}</b></p>
+            
+            <div style="background: #f4f4f6; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+              <h2 style="font-size: 18px; margin: 0;">Grand Total: ${sym}${parseFloat(receipt.total_amount).toFixed(2)}</h2>
+              <p style="font-size: 12px; color: #555; margin: 4px 0 0;">Tax: ${sym}${parseFloat(receipt.tax_amount||0).toFixed(2)} | Tip: ${sym}${parseFloat(receipt.tip_amount||0).toFixed(2)}</p>
+            </div>
+
+            <h3 style="font-size: 14px; text-transform: uppercase; margin-top: 16px;">Participant Balances</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; margin-bottom: 20px;">
+              <thead>
+                <tr style="background: #eee;">
+                  <th style="padding: 8px;">Name</th>
+                  <th style="padding: 8px;">Paid</th>
+                  <th style="padding: 8px;">Share</th>
+                  <th style="padding: 8px;">Net</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+
+            <h3 style="font-size: 14px; text-transform: uppercase;">Smart Transfers</h3>
+            <div style="font-size: 13px; margin-bottom: 20px;">${transfersHtml}</div>
+
+            <p style="font-size: 11px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">Generated via SmartSplit AI • ${new Date().toLocaleDateString()}</p>
+          </div>
+        `;
+
+        printDiv.classList.remove('hidden');
+        window.print();
+        setTimeout(() => printDiv.classList.add('hidden'), 1000);
+      } catch(err) {
+        showToast(`Print failed: ${err.message}`, 'error');
+      }
+    }
+
+    // --- GROUPS / TRIPS AGGREGATOR TAB LOGIC ---
+    let activeGroupId = null;
+    let userGroupsCache = [];
+
+    async function loadUserGroups() {
+      const container = document.getElementById('groupsListContainer');
+      if (!currentUser || currentUser.id === 9999) {
+        container.innerHTML = `
+          <div class="app-card p-8 rounded-3xl text-center space-y-3">
+            <p class="font-bold text-base" style="color: var(--text-heading);">Please Log In for Trips & Groups</p>
+            <p class="text-xs" style="color: var(--text-sub);">Sign in to create multi-receipt trips and share consolidated expense tracking with your friends.</p>
+            <button onclick="logoutUser()" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Go to Sign In</button>
+          </div>
+        `;
         return;
       }
 
-      const activeShares = [];
-      currentReceiptItems.forEach(item => {
-        const s = itemSharesState[item.id];
-        if (s && s.fraction > 0) {
-          activeShares.push({
-            item_id: item.id,
-            fraction: s.fraction,
-            portion_label: s.type === '1/2' ? '1/2' : (s.type === '1/3' ? '1/3' : (s.type === '1/4' ? '1/4' : (s.type === 'custom' ? `1/${s.denom}` : '1/1')))
-          });
-        }
-      });
+      container.innerHTML = '<div class="p-8 text-center font-medium app-card rounded-3xl" style="color: var(--text-sub);">Loading trips & groups...</div>';
 
-      const btn = document.getElementById('saveSharesBtn');
+      try {
+        const res = await fetch(`${API_BASE}/groups/user/${currentUser.id}`);
+        const groups = await res.json();
+        if (!res.ok) throw new Error(groups.detail || 'Could not fetch groups');
+
+        userGroupsCache = groups;
+        renderGroupsList(groups);
+      } catch (err) {
+        container.innerHTML = `<div class="p-6 text-center text-red-500 text-xs">${err.message}</div>`;
+      }
+    }
+
+    function renderGroupsList(groups) {
+      const container = document.getElementById('groupsListContainer');
+      if (groups.length === 0) {
+        container.innerHTML = `
+          <div class="app-card p-8 rounded-3xl text-center space-y-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto border" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-sub);">
+              🏖️
+            </div>
+            <p class="font-bold text-base" style="color: var(--text-heading);">No Trips or Groups Yet</p>
+            <p class="text-xs" style="color: var(--text-sub);">Create a trip (e.g. "Goa Weekend") to combine multiple hotel, food, and cab bills into one consolidated settlement!</p>
+            <button onclick="openCreateGroupModal()" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Create First Trip</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      groups.forEach(g => {
+        const sym = g.currency_symbol || getCurrencySym(g.currency);
+        const card = document.createElement('div');
+        card.className = 'app-card-interactive p-5 rounded-3xl cursor-pointer space-y-3';
+        card.onclick = () => openGroupDetails(g.id);
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">🏖️</span>
+                <span class="font-black text-base" style="color: var(--text-heading);">${g.name}</span>
+              </div>
+              <p class="text-xs" style="color: var(--text-sub);">${g.description || 'Trip expense group'} • ${g.members.length} members</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Total Spend</p>
+              <p class="text-lg font-black text-emerald-400">${sym}${g.total_spend.toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t text-xs font-medium" style="border-color: var(--border-sub); color: var(--text-sub);">
+            <span>${g.receipts.length} receipts aggregated</span>
+            <span class="font-bold text-purple-400">View Consolidated Settlement →</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function openCreateGroupModal() {
+      document.getElementById('groupNameInput').value = '';
+      document.getElementById('groupDescInput').value = '';
+      document.getElementById('groupCurrencyInput').value = currentCurrency;
+
+      const listEl = document.getElementById('groupMembersChecklist');
+      listEl.innerHTML = '<div class="text-xs">Loading members...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/users/`);
+        const users = await res.json();
+        listEl.innerHTML = '';
+        users.forEach(u => {
+          if (u.id === currentUser?.id) return;
+          const label = document.createElement('label');
+          label.className = 'flex items-center gap-2 text-xs font-semibold cursor-pointer p-1.5 rounded-lg hover:bg-purple-900/20';
+          label.innerHTML = `
+            <input type="checkbox" value="${u.id}" class="group-member-checkbox rounded border-purple-500 text-purple-600 focus:ring-0" />
+            <span style="color: var(--text-heading);">${u.name} ${u.upi_id ? '(UPI)' : ''}</span>
+          `;
+          listEl.appendChild(label);
+        });
+      } catch(e) {}
+
+      document.getElementById('createGroupModal').classList.remove('hidden');
+    }
+
+    function closeCreateGroupModal() {
+      document.getElementById('createGroupModal').classList.add('hidden');
+    }
+
+    async function handleCreateGroupSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('groupNameInput').value.trim();
+      const desc = document.getElementById('groupDescInput').value.trim();
+      const cur = document.getElementById('groupCurrencyInput').value;
+
+      const checkedBoxes = document.querySelectorAll('.group-member-checkbox:checked');
+      const memberIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+
+      const btn = document.getElementById('saveGroupBtn');
       btn.disabled = true;
 
       try {
-        const res = await fetch(`${API_BASE}/split/assign-user-shares`, {
+        const res = await fetch(`${API_BASE}/groups?creator_id=${currentUser.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            receipt_id: activeReceiptId,
-            user_id: currentUser.id,
-            shares: activeShares
+            name: name,
+            description: desc,
+            currency: cur,
+            member_ids: memberIds
           })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail);
 
-        showToast('Your shares have been saved!');
-        startLiveSummaryPolling(activeReceiptId, 'liveSummaryList');
-        document.getElementById('hostShareSection').classList.remove('hidden');
+        const newGroup = await res.json();
+        if (!res.ok) throw new Error(newGroup.detail || 'Could not create group');
+
+        closeCreateGroupModal();
+        showToast(`Trip "${newGroup.name}" created! 🏖️`);
+        loadUserGroups();
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
@@ -1454,8 +2564,403 @@
       }
     }
 
+    async function openGroupDetails(groupId) {
+      activeGroupId = groupId;
+      try {
+        const [gRes, sumRes] = await Promise.all([
+          fetch(`${API_BASE}/groups/${groupId}`),
+          fetch(`${API_BASE}/groups/${groupId}/summary`)
+        ]);
+        const group = await gRes.json();
+        const summary = await sumRes.json();
+        if (!gRes.ok) throw new Error(group.detail);
+
+        const sym = group.currency_symbol || getCurrencySym(group.currency);
+        document.getElementById('groupModalTitle').innerText = group.name;
+        document.getElementById('groupModalSubtitle').innerText = `${group.description || 'Trip'} • Created ${group.created_at}`;
+        document.getElementById('groupModalTotalSpend').innerText = `${sym}${group.total_spend.toFixed(2)}`;
+        document.getElementById('groupModalReceiptCount').innerText = group.receipts.length;
+
+        // Render Receipts
+        const rList = document.getElementById('groupReceiptsListContainer');
+        rList.innerHTML = '';
+        if (group.receipts.length === 0) {
+          rList.innerHTML = '<div class="p-3 text-xs text-center border rounded-xl" style="color: var(--text-sub); border-color: var(--border-sub);">No bills attached to this trip yet. Click "+ Add Bill to Trip".</div>';
+        } else {
+          group.receipts.forEach(r => {
+            const rDiv = document.createElement('div');
+            rDiv.className = 'p-3 rounded-2xl border flex items-center justify-between shadow-sm';
+            rDiv.style.background = 'var(--bg-sub)';
+            rDiv.style.borderColor = 'var(--border-sub)';
+            rDiv.innerHTML = `
+              <div>
+                <p class="font-bold text-xs" style="color: var(--text-heading);">${r.store_name} (#${r.join_code || r.receipt_id})</p>
+                <p class="text-[10px]" style="color: var(--text-sub);">${r.created_at} • By ${r.uploader_name}</p>
+              </div>
+              <div class="text-right flex items-center gap-2">
+                <span class="font-bold text-xs" style="color: var(--text-heading);">${sym}${r.total_amount.toFixed(2)}</span>
+                <button onclick="openReceiptDetailsModal(${r.receipt_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-purple-300" style="background: var(--bg-chip);">View</button>
+              </div>
+            `;
+            rList.appendChild(rDiv);
+          });
+        }
+
+        // Render Consolidated Transfers
+        const tList = document.getElementById('groupConsolidatedTransfersContainer');
+        tList.innerHTML = '';
+        if (summary.transfers && summary.transfers.length > 0) {
+          summary.transfers.forEach(t => {
+            const tDiv = document.createElement('div');
+            tDiv.className = 'p-3 rounded-2xl border flex items-center justify-between shadow-sm';
+            tDiv.style.background = 'var(--bg-sub)';
+            tDiv.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            tDiv.innerHTML = `
+              <div class="text-xs font-bold" style="color: var(--text-heading);">
+                <span>${t.from_user_name}</span>
+                <span class="text-[10px] opacity-70 px-1">pays →</span>
+                <span class="text-emerald-400">${t.to_user_name}</span>
+              </div>
+              <div class="font-black text-sm text-emerald-400">
+                ${sym}${t.amount.toFixed(2)}
+              </div>
+            `;
+            tList.appendChild(tDiv);
+          });
+        } else {
+          tList.innerHTML = '<div class="p-3 text-xs font-bold text-center text-emerald-400 border rounded-xl border-emerald-500/30 bg-emerald-950/20">🎉 All trip balances are completely squared!</div>';
+        }
+
+        document.getElementById('groupDetailsModal').classList.remove('hidden');
+      } catch (err) {
+        showToast(`Could not load group: ${err.message}`, 'error');
+      }
+    }
+
+    function closeGroupDetailsModal() {
+      document.getElementById('groupDetailsModal').classList.add('hidden');
+    }
+
+    async function openAddReceiptToGroupModal() {
+      const receiptCodeOrId = prompt('Enter the 6-character receipt code or ID to attach to this trip:');
+      if (!receiptCodeOrId) return;
+
+      try {
+        let recRes = await fetch(`${API_BASE}/receipts/${receiptCodeOrId}`);
+        if (!recRes.ok) {
+          recRes = await fetch(`${API_BASE}/receipts/code/${receiptCodeOrId.toUpperCase()}`);
+        }
+        const recData = await recRes.json();
+        if (!recRes.ok) throw new Error('Receipt not found');
+
+        const linkRes = await fetch(`${API_BASE}/groups/${activeGroupId}/receipts/${recData.id}`, {
+          method: 'POST'
+        });
+        if (!linkRes.ok) throw new Error('Could not link receipt to trip');
+
+        showToast(`Bill "${recData.store_name}" added to trip! ✅`);
+        openGroupDetails(activeGroupId);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function shareGroupWhatsAppSummary() {
+      if (!activeGroupId) return;
+      try {
+        const [gRes, sumRes] = await Promise.all([
+          fetch(`${API_BASE}/groups/${activeGroupId}`),
+          fetch(`${API_BASE}/groups/${activeGroupId}/summary`)
+        ]);
+        const group = await gRes.json();
+        const summary = await sumRes.json();
+        const sym = group.currency_symbol || getCurrencySym(group.currency);
+
+        let text = `🏖️ *${group.name} - Consolidated Trip Expenses*\n`;
+        text += `💰 *Total Trip Spend:* ${sym}${summary.total_spend.toFixed(2)} across ${summary.receipts_count} bills\n\n`;
+
+        text += `💸 *Consolidated Settlements (Who Pays Whom):*\n`;
+        if (summary.transfers && summary.transfers.length > 0) {
+          summary.transfers.forEach(t => {
+            const upiNote = t.to_user_upi ? ` [UPI: ${t.to_user_upi}]` : '';
+            text += `👉 *${t.from_user_name}* ➔ *${t.to_user_name}*: ${sym}${t.amount.toFixed(2)}${upiNote}\n`;
+          });
+        } else {
+          text += `🎉 All members are settled up!\n`;
+        }
+
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank');
+      } catch(err) {
+        showToast('Could not generate trip report', 'error');
+      }
+    }
+
+    // ==========================================
+    // MULTI-PAYER MANAGEMENT LOGIC
+    // ==========================================
+    let payersModalReceiptId = null;
+    let payersModalBillTotalVal = 0.0;
+    let payersModalRows = [];
+    let allAvailableUsersCache = [];
+
+    async function openManagePayersModal(receiptId) {
+      payersModalReceiptId = receiptId || activeReceiptId || modalReceiptId;
+      if (!payersModalReceiptId) return showToast('No active receipt found', 'error');
+
+      try {
+        const [uRes, rRes, pRes] = await Promise.all([
+          fetch(`${API_BASE}/users/`),
+          fetch(`${API_BASE}/receipts/${payersModalReceiptId}`),
+          fetch(`${API_BASE}/split/payers/${payersModalReceiptId}`)
+        ]);
+
+        allAvailableUsersCache = await uRes.json();
+        const receiptData = await rRes.json();
+        const currentPayers = await pRes.json();
+
+        const sym = receiptData.currency_symbol || getCurrencySym(receiptData.currency);
+        payersModalBillTotalVal = parseFloat(receiptData.total_amount || 0);
+        document.getElementById('payersModalBillTotal').innerText = `${sym}${payersModalBillTotalVal.toFixed(2)}`;
+
+        if (Array.isArray(currentPayers) && currentPayers.length > 0) {
+          payersModalRows = currentPayers.map(p => ({
+            user_id: p.user_id,
+            name: p.user_name || '',
+            amount: parseFloat(p.amount_paid || 0)
+          }));
+        } else {
+          const uploaderId = receiptData.uploader_id || (currentUser ? currentUser.id : null);
+          const uploaderName = receiptData.uploader_name || (currentUser ? currentUser.name : 'Host');
+          payersModalRows = [
+            {
+              user_id: uploaderId,
+              name: uploaderName,
+              amount: payersModalBillTotalVal
+            }
+          ];
+        }
+
+        renderPayersModalRows();
+        document.getElementById('managePayersModal').classList.remove('hidden');
+      } catch (err) {
+        showToast(`Failed to load payers: ${err.message}`, 'error');
+      }
+    }
+
+    function closeManagePayersModal() {
+      document.getElementById('managePayersModal').classList.add('hidden');
+    }
+
+    function renderPayersModalRows() {
+      const container = document.getElementById('payersInputsContainer');
+      container.innerHTML = '';
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
+
+      payersModalRows.forEach((row, idx) => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'p-3 rounded-2xl border flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shadow-sm';
+        rowDiv.style.background = 'var(--bg-sub)';
+        rowDiv.style.borderColor = 'var(--border-sub)';
+
+        let userOptions = allAvailableUsersCache.map(u => 
+          `<option value="${u.id}" ${row.user_id === u.id ? 'selected' : ''}>${u.name}${u.upi_id ? ' (UPI)' : ''}</option>`
+        ).join('');
+
+        userOptions += `<option value="custom" ${!row.user_id && row.name ? 'selected' : ''}>+ Other / Custom Name</option>`;
+
+        rowDiv.innerHTML = `
+          <div class="flex-1 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
+              ${idx + 1}
+            </span>
+            <div class="flex-1 space-y-1">
+              <select onchange="onPayerUserSelectChange(${idx}, this.value)" class="w-full p-2 theme-input rounded-xl text-xs font-bold outline-none border">
+                ${userOptions}
+              </select>
+              <input type="text" id="custom-payer-name-${idx}" placeholder="Enter Person's Name" value="${row.name || ''}" oninput="onPayerCustomNameChange(${idx}, this.value)" class="${row.user_id ? 'hidden' : ''} w-full p-1.5 theme-input rounded-lg text-xs font-medium outline-none border" />
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1 sm:w-28">
+              <span class="absolute left-2.5 top-2 text-xs font-bold" style="color: var(--text-dim);">${sym}</span>
+              <input type="number" step="0.01" min="0" value="${row.amount > 0 ? row.amount : ''}" placeholder="0.00" oninput="onPayerAmountInput(${idx}, this.value)" class="w-full pl-6 pr-2.5 py-2 theme-input rounded-xl text-xs font-mono font-bold outline-none border text-right" />
+            </div>
+            <button type="button" onclick="removePayerRow(${idx})" class="w-8 h-8 rounded-xl border flex items-center justify-center text-xs font-bold text-red-400 hover:bg-red-500/20 transition shrink-0" style="background: var(--bg-chip); border-color: var(--border-sub);">
+              ✕
+            </button>
+          </div>
+        `;
+        container.appendChild(rowDiv);
+      });
+
+      updatePayersModalSumUI();
+    }
+
+    function onPayerUserSelectChange(idx, val) {
+      if (val === 'custom') {
+        payersModalRows[idx].user_id = null;
+        payersModalRows[idx].name = '';
+      } else {
+        const uid = parseInt(val);
+        const userObj = allAvailableUsersCache.find(u => u.id === uid);
+        payersModalRows[idx].user_id = uid;
+        payersModalRows[idx].name = userObj ? userObj.name : '';
+      }
+      renderPayersModalRows();
+    }
+
+    function onPayerCustomNameChange(idx, val) {
+      payersModalRows[idx].name = val.trim();
+    }
+
+    function onPayerAmountInput(idx, val) {
+      payersModalRows[idx].amount = parseFloat(val) || 0.0;
+      updatePayersModalSumUI();
+    }
+
+    function addNewPayerRow(userId = null, name = '', amount = 0) {
+      if (!userId && allAvailableUsersCache.length > 0) {
+        const usedIds = payersModalRows.map(r => r.user_id);
+        const nextUser = allAvailableUsersCache.find(u => !usedIds.includes(u.id));
+        if (nextUser) {
+          userId = nextUser.id;
+          name = nextUser.name;
+        } else {
+          name = `Payer ${payersModalRows.length + 1}`;
+        }
+      }
+      payersModalRows.push({ user_id: userId, name: name, amount: amount });
+      renderPayersModalRows();
+    }
+
+    function removePayerRow(idx) {
+      if (payersModalRows.length <= 1) {
+        return showToast('At least one payer is required', 'error');
+      }
+      payersModalRows.splice(idx, 1);
+      renderPayersModalRows();
+    }
+
+    function splitPaidAmountEqually() {
+      if (payersModalRows.length === 0) return;
+      const count = payersModalRows.length;
+      const splitVal = Math.floor((payersModalBillTotalVal / count) * 100) / 100;
+      let remainder = Math.round((payersModalBillTotalVal - (splitVal * count)) * 100) / 100;
+
+      payersModalRows.forEach((r, i) => {
+        r.amount = (i === 0) ? roundNum(splitVal + remainder) : splitVal;
+      });
+      renderPayersModalRows();
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
+      showToast(`Split paid amount equally (${sym}${splitVal.toFixed(2)} each)`);
+    }
+
+    function roundNum(num) {
+      return Math.round(num * 100) / 100;
+    }
+
+    function updatePayersModalSumUI() {
+      let sum = 0;
+      payersModalRows.forEach(r => sum += (r.amount || 0));
+      sum = roundNum(sum);
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
+
+      document.getElementById('payersModalTotalEntered').innerText = `${sym}${sum.toFixed(2)}`;
+
+      const alertEl = document.getElementById('payersMatchAlert');
+      const diff = roundNum(payersModalBillTotalVal - sum);
+
+      if (Math.abs(diff) < 0.01) {
+        alertEl.className = 'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between border bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+        alertEl.innerHTML = `<span>✅ Paid amounts match total bill!</span><span>${sym}${sum.toFixed(2)}</span>`;
+      } else if (diff > 0) {
+        alertEl.className = 'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between border bg-amber-950/60 text-amber-300 border-amber-500/40';
+        alertEl.innerHTML = `<span>⚠️ ${sym}${diff.toFixed(2)} remaining</span><button type="button" onclick="allocateRemainingToFirstPayer(${diff})" class="underline text-[11px]">Add to Payer 1</button>`;
+      } else {
+        alertEl.className = 'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between border bg-red-950/60 text-red-300 border-red-500/40';
+        alertEl.innerHTML = `<span>⚠️ Over by ${sym}${Math.abs(diff).toFixed(2)}</span><span>Total: ${sym}${sum.toFixed(2)}</span>`;
+      }
+    }
+
+    function allocateRemainingToFirstPayer(diff) {
+      if (payersModalRows.length > 0) {
+        payersModalRows[0].amount = roundNum((payersModalRows[0].amount || 0) + diff);
+        renderPayersModalRows();
+      }
+    }
+
+    async function saveReceiptPayers() {
+      if (payersModalRows.length === 0) return showToast('Add at least one payer', 'error');
+
+      const btn = document.getElementById('savePayersBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving Payers...';
+
+      try {
+        const uncreatedNames = payersModalRows.filter(r => !r.user_id && r.name).map(r => r.name);
+        if (uncreatedNames.length > 0) {
+          const bulkRes = await fetch(`${API_BASE}/users/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ names: uncreatedNames })
+          });
+          const createdUsers = await bulkRes.json();
+          if (bulkRes.ok && Array.isArray(createdUsers)) {
+            let uIdx = 0;
+            payersModalRows.forEach(r => {
+              if (!r.user_id && createdUsers[uIdx]) {
+                r.user_id = createdUsers[uIdx].id;
+                uIdx++;
+              }
+            });
+          }
+        }
+
+        const validPayers = payersModalRows
+          .filter(r => r.user_id && r.amount > 0)
+          .map(r => ({
+            user_id: r.user_id,
+            user_name: r.name,
+            amount_paid: r.amount
+          }));
+
+        if (validPayers.length === 0) {
+          throw new Error('Please allocate an amount greater than 0 to at least one payer.');
+        }
+
+        const res = await fetch(`${API_BASE}/split/payers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receipt_id: payersModalReceiptId,
+            payers: validPayers
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not update payers');
+
+        showToast('Receipt payers updated! Split recalculated ✅');
+        closeManagePayersModal();
+
+        fetchSummary(payersModalReceiptId, 'liveSummaryList');
+        if (!document.getElementById('receiptModal').classList.contains('hidden')) {
+          fetchSummary(payersModalReceiptId, 'modalSummaryList');
+        }
+        if (currentTab === 'history') {
+          loadUserHistory();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Payers & Recalculate Split';
+      }
+    }
+
     // --- DATABASE-BACKED PAYMENT SETTLEMENT ---
-    async function recordPaymentSettlement(receiptId, userId, isPaid = true, amount = null, transactionRef = null) {
+    async function recordPaymentSettlement(receiptId, userId, isPaid = true, amount = null, transactionRef = null, payeeId = null) {
       try {
         const res = await fetch(`${API_BASE}/split/settle`, {
           method: 'POST',
@@ -1463,6 +2968,7 @@
           body: JSON.stringify({
             receipt_id: receiptId,
             user_id: userId,
+            payee_id: payeeId,
             is_paid: isPaid,
             amount: amount,
             transaction_ref: transactionRef
@@ -1486,15 +2992,16 @@
       }
     }
 
-    function togglePaymentStatus(receiptId, userId, currentIsPaid) {
-      recordPaymentSettlement(receiptId, userId, !currentIsPaid);
+    function togglePaymentStatus(receiptId, userId, currentIsPaid, amount = null, payeeId = null) {
+      recordPaymentSettlement(receiptId, userId, !currentIsPaid, amount, null, payeeId);
     }
 
     // --- AUTOMATIC APP RETURN CONFIRMATION ---
     let activeConfirmPaymentData = null;
     function openPaymentConfirmModal(data) {
       activeConfirmPaymentData = data;
-      document.getElementById('confirmModalAmountText').innerText = `₹${parseFloat(data.amount || 0).toFixed(2)}`;
+      const sym = activeReceiptData?.currency_symbol || getCurrencySym(activeReceiptData?.currency || currentCurrency);
+      document.getElementById('confirmModalAmountText').innerText = `${sym}${parseFloat(data.amount || 0).toFixed(2)}`;
       document.getElementById('confirmModalPayeeText').innerText = `To: ${data.payee || 'Host'}`;
       document.getElementById('confirmModalUtrInput').value = '';
       document.getElementById('paymentConfirmModal').classList.remove('hidden');
@@ -1518,7 +3025,8 @@
         activeConfirmPaymentData.user_id,
         true,
         activeConfirmPaymentData.amount,
-        utr
+        utr,
+        activeConfirmPaymentData.payee_id || null
       );
 
       btn.disabled = false;
@@ -1533,7 +3041,6 @@
       if (!pending) return;
       try {
         const data = JSON.parse(pending);
-        // If payment initiated within the last 15 minutes, prompt confirmation
         if (data && data.receipt_id && (Date.now() - data.timestamp < 15 * 60 * 1000)) {
           openPaymentConfirmModal(data);
         }
@@ -1576,106 +3083,175 @@
       }
     }
 
-    // --- SUMMARY RENDERING WITH 1-TAP UPI PAYMENT ---
+    // --- SUMMARY RENDERING WITH MULTI-PAYER & SMART TRANSFERS ---
     async function fetchSummary(receiptId, targetListId, isSilent = false) {
       if (!receiptId) return;
       try {
-        // Fetch both receipt details (for host UPI) and split summary
         const [sumRes, recRes] = await Promise.all([
           fetch(`${API_BASE}/split/summary/${receiptId}`),
           fetch(`${API_BASE}/receipts/${receiptId}`)
         ]);
 
-        const data = await sumRes.json();
+        const rawSum = await sumRes.json();
         const receiptData = await recRes.json();
-        if (!sumRes.ok) throw new Error(data.detail);
+        if (!sumRes.ok) throw new Error(rawSum.detail);
 
         activeReceiptData = receiptData;
+        const sym = receiptData.currency_symbol || getCurrencySym(receiptData.currency);
 
         const list = document.getElementById(targetListId);
         if (!list) return;
         list.innerHTML = '';
 
-        if (data.length === 0) {
+        const users = Array.isArray(rawSum) ? rawSum : (rawSum.users || []);
+        const transfers = rawSum.transfers || [];
+        const payers = rawSum.payers || receiptData.payers || [];
+
+        // Update Payer Names Display across active screens
+        let payerText = 'Host';
+        if (payers.length > 0) {
+          payerText = payers.map(p => `${p.user_name} (${sym}${p.amount_paid.toFixed(2)})`).join(', ');
+        } else if (receiptData.uploader_name) {
+          payerText = `${receiptData.uploader_name} (${sym}${parseFloat(receiptData.total_amount).toFixed(2)})`;
+        }
+
+        const hPayerEl = document.getElementById('hostPayerNamesDisplay');
+        if (hPayerEl) hPayerEl.innerText = payerText;
+        const iPayerEl = document.getElementById('itemsPayerSummaryText');
+        if (iPayerEl) iPayerEl.innerText = payerText;
+        const mPayerEl = document.getElementById('modalPayerSummaryText');
+        if (mPayerEl) mPayerEl.innerText = payerText;
+
+        if (users.length === 0 && transfers.length === 0) {
           list.innerHTML = '<div class="p-4 text-center text-xs font-medium" style="color: var(--text-sub);">No participant shares assigned yet.</div>';
           return;
         }
 
-        const hostUpi = receiptData.uploader_upi_id || (currentUser && currentUser.id === receiptData.uploader_id ? currentUser.upi_id : null);
-        const hostName = receiptData.uploader_name || 'Host';
-        const isCurrentUserHost = (currentUser && receiptData.uploader_id && currentUser.id === receiptData.uploader_id);
+        // SECTION 1: SMART SETTLEMENT TRANSFERS
+        const transferContainer = document.createElement('div');
+        transferContainer.className = 'space-y-3 pb-3';
 
-        data.forEach(row => {
+        const transferHeader = document.createElement('div');
+        transferHeader.className = 'flex items-center justify-between pt-1 px-1';
+        transferHeader.innerHTML = `
+          <div class="flex items-center gap-1.5">
+            <span class="text-emerald-400 font-bold text-xs">⚡ Who Pays Whom (Simplified Settlements)</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-950/60 text-emerald-300 border-emerald-500/40">Auto</span>
+          </div>
+          <button type="button" onclick="openManagePayersModal(${receiptId})" class="text-[11px] font-bold text-purple-400 hover:underline">
+            Edit Payers 💳
+          </button>
+        `;
+        transferContainer.appendChild(transferHeader);
+
+        if (transfers.length === 0) {
+          const noDebtDiv = document.createElement('div');
+          noDebtDiv.className = 'p-3.5 rounded-2xl border text-center text-xs font-bold text-emerald-400 bg-emerald-950/30 border-emerald-500/30';
+          noDebtDiv.innerHTML = `🎉 All balances are perfectly settled! No money transfers needed.`;
+          transferContainer.appendChild(noDebtDiv);
+        } else {
+          transfers.forEach(tr => {
+            const trCard = document.createElement('div');
+            trCard.className = 'p-3.5 rounded-2xl border space-y-2.5 shadow-sm';
+            trCard.style.background = 'var(--bg-card)';
+            trCard.style.borderColor = tr.is_paid ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-main)';
+
+            const isMyDebt = (currentUser && currentUser.id === tr.from_user_id);
+            const isPaid = !!tr.is_paid;
+
+            let payUpiBtn = '';
+            if (!isPaid) {
+              if (tr.to_user_upi) {
+                if (isMyDebt) {
+                  payUpiBtn = `
+                    <button onclick="openUpiQrModal('${tr.to_user_upi}', '${tr.to_user_name}', ${tr.amount}, ${tr.from_user_id}, ${tr.to_user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1 shadow-md">
+                      ⚡ Pay ${tr.to_user_name} ${sym}${tr.amount.toFixed(2)}
+                    </button>
+                  `;
+                } else {
+                  payUpiBtn = `
+                    <button onclick="openUpiQrModal('${tr.to_user_upi}', '${tr.to_user_name}', ${tr.amount}, ${tr.from_user_id}, ${tr.to_user_id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border text-purple-300 border-purple-500/30" style="background: var(--bg-chip);">
+                      Show QR
+                    </button>
+                  `;
+                }
+              } else {
+                payUpiBtn = `<span class="text-[10px] text-purple-300">No UPI set</span>`;
+              }
+            }
+
+            const statusBtn = isPaid
+              ? `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, true, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅${tr.settled_at ? ` <span class="text-[9px] opacity-80">(${tr.settled_at})</span>` : ''}</button>`
+              : `<button onclick="togglePaymentStatus(${receiptId}, ${tr.from_user_id}, false, ${tr.amount}, ${tr.to_user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
+
+            trCard.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full bg-purple-900/60 border border-purple-500/40 text-purple-200 flex items-center justify-center font-bold text-xs">
+                    ${(tr.from_user_name || 'U')[0].toUpperCase()}
+                  </div>
+                  <div class="text-xs font-bold" style="color: var(--text-heading);">
+                    <span>${tr.from_user_name}</span>
+                    <span class="text-[10px] font-semibold opacity-70 px-1">pays →</span>
+                    <span class="text-purple-400">${tr.to_user_name}</span>
+                  </div>
+                </div>
+                <div class="font-black text-base ${isPaid ? 'text-emerald-400 line-through opacity-75' : 'text-purple-300'}">
+                  ${sym}${tr.amount.toFixed(2)}
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t gap-2 flex-wrap" style="border-color: var(--border-sub);">
+                <div class="flex items-center gap-1.5">
+                  ${statusBtn}
+                </div>
+                <div class="flex items-center gap-1.5">
+                  ${payUpiBtn}
+                </div>
+              </div>
+            `;
+            transferContainer.appendChild(trCard);
+          });
+        }
+        list.appendChild(transferContainer);
+
+        // SECTION 2: PARTICIPANT BALANCES & CONSUMPTION
+        const balancesHeader = document.createElement('div');
+        balancesHeader.className = 'flex items-center justify-between pt-4 pb-2 border-t px-1';
+        balancesHeader.style.borderColor = 'var(--border-sub)';
+        balancesHeader.innerHTML = `
+          <span class="text-xs font-bold" style="color: var(--text-sub);">👥 Member Balances & Items Breakdown</span>
+          <span class="text-[10px] font-bold text-purple-400">Tap row for items</span>
+        `;
+        list.appendChild(balancesHeader);
+
+        users.forEach(row => {
           const div = document.createElement('div');
-          div.className = 'p-3.5 flex flex-col gap-2';
-          
-          const isPaid = !!row.is_paid;
-          const isHostRow = (receiptData.uploader_id && row.user_id === receiptData.uploader_id);
-          const isMyRow = (currentUser && currentUser.id === row.user_id);
-          const settledDate = row.settled_at;
+          div.className = 'p-3 flex flex-col gap-2 rounded-2xl border transition hover:border-purple-500/30';
+          div.style.background = 'var(--bg-sub)';
+          div.style.borderColor = 'var(--border-sub)';
+
+          const net = parseFloat(row.net_balance || 0);
+          const paidUpfront = parseFloat(row.amount_paid || 0);
+          const consumed = parseFloat(row.consumed_cost || 0);
+
+          let balanceBadge = '';
+          if (net > 0.009) {
+            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">+${sym}${net.toFixed(2)} (gets back)</span>`;
+          } else if (net < -0.009) {
+            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-amber-950/80 text-amber-400 border border-amber-500/30">-${sym}${Math.abs(net).toFixed(2)} (owes)</span>`;
+          } else {
+            balanceBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-purple-950/60 text-purple-300 border border-purple-500/20">${sym}0.00 (settled)</span>`;
+          }
 
           let itemsHtml = (row.items && row.items.length > 0)
             ? row.items.map(i => `
                 <div class="flex justify-between text-xs" style="color: var(--text-sub);">
                   <span class="truncate pr-2">${i.item_name} <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded" style="background: var(--bg-chip); border-color: var(--border-main); color: var(--text-body);">(${i.portion_label || '1/1'})</span></span>
-                  <span class="font-bold whitespace-nowrap" style="color: var(--text-heading);">₹${i.cost.toFixed(2)}</span>
+                  <span class="font-bold whitespace-nowrap" style="color: var(--text-heading);">${sym}${i.cost.toFixed(2)}</span>
                 </div>
               `).join('')
             : '<div class="text-xs" style="color: var(--text-dim);">No items selected</div>';
-
-          // UPI & Settlement Action Bar for each participant
-          let paymentActionHtml = '';
-          if (row.total_owed > 0) {
-            if (isHostRow) {
-              // Host already paid the bill at the restaurant/store
-              paymentActionHtml = `
-                <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[10px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 px-2.5 py-1 rounded-lg">Host (Paid Original Bill) 🧾</span>
-                  </div>
-                </div>
-              `;
-            } else {
-              // Participant row who owes money to the host
-              const statusBadge = isPaid 
-                ? `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id}, true)" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center gap-1">Paid ✅${settledDate ? ` <span class="text-[9px] opacity-80">(${settledDate})</span>` : ''}</button>`
-                : `<button onclick="togglePaymentStatus(${receiptId}, ${row.user_id}, false)" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-amber-400 border-amber-500/30 bg-amber-950/40 flex items-center gap-1">Mark Paid ⏳</button>`;
-
-              let upiAction = '';
-              // Non-host participant viewing their own row pays the host
-              if (isMyRow && !isCurrentUserHost) {
-                if (hostUpi) {
-                  upiAction = `
-                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg lavender-glow-btn text-white flex items-center gap-1 shadow-md">
-                      ⚡ Pay Host ₹${row.total_owed.toFixed(2)} (UPI)
-                    </button>
-                  `;
-                } else {
-                  upiAction = `<span class="text-[10px] text-purple-300">Host UPI not set</span>`;
-                }
-              } else if (isCurrentUserHost) {
-                // Host viewing friend's row can show QR for friend to scan
-                if (hostUpi) {
-                  upiAction = `
-                    <button onclick="openUpiQrModal('${hostUpi}', '${hostName}', ${row.total_owed}, ${row.user_id})" class="text-[10px] font-bold px-2.5 py-1 rounded-lg border text-purple-300 border-purple-500/30 hover:bg-purple-900/30 flex items-center gap-1" style="background: var(--bg-chip);">
-                      Show QR
-                    </button>
-                  `;
-                }
-              }
-
-              paymentActionHtml = `
-                <div class="flex items-center justify-between pt-2 border-t mt-1 gap-2 flex-wrap" style="border-color: var(--border-sub);">
-                  <div class="flex items-center gap-1.5">
-                    ${statusBadge}
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    ${upiAction}
-                  </div>
-                </div>
-              `;
-            }
-          }
 
           div.innerHTML = `
             <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -1685,28 +3261,24 @@
                 </div>
                 <div>
                   <span class="font-bold text-sm" style="color: var(--text-heading);">${row.user_name}</span>
-                  ${row.upi_id ? `<p class="text-[10px] font-mono text-purple-400">${row.upi_id}</p>` : ''}
+                  <p class="text-[10px]" style="color: var(--text-dim);">Paid: ${sym}${paidUpfront.toFixed(2)} • Consumed: ${sym}${consumed.toFixed(2)}</p>
                 </div>
               </div>
               <div class="text-right">
-                <span class="font-black text-base ${isPaid ? 'text-emerald-400' : 'text-purple-600 dark:text-purple-300'}">₹${row.total_owed.toFixed(2)}</span>
+                ${balanceBadge}
               </div>
             </div>
-            <div class="hidden pt-1 pl-10 space-y-1.5">
+            <div class="hidden pt-2 pl-10 space-y-1.5 border-t mt-1" style="border-color: var(--border-sub);">
+              <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">Consumed Items & Tax/Tip:</p>
               ${itemsHtml}
             </div>
-            ${paymentActionHtml}
           `;
           list.appendChild(div);
         });
+
       } catch (err) {
         if (!isSilent) showToast(err.message, 'error');
       }
-    }
-
-    function promptHostUpi() {
-      switchTab('profile');
-      showToast('Set your UPI ID in Profile so group members can pay you in 1 tap!');
     }
 
     // --- EXPENSE HISTORY & RETRIEVAL ---
@@ -1722,7 +3294,7 @@
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
             <p class="font-bold text-base" style="color: var(--text-heading);">No expense history yet</p>
-            <p class="text-xs" style="color: var(--text-sub);">Upload a receipt or join a split to see it stored here permanently.</p>
+            <p class="text-xs" style="color: var(--text-sub);">Upload a receipt or create a bill to see it stored here permanently.</p>
             <button onclick="switchTab('split')" class="lavender-glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl">Start a Split</button>
           </div>
         `;
@@ -1733,6 +3305,7 @@
       container.innerHTML = '';
       history.forEach(item => {
         totalOwedSum += item.my_share_cost;
+        const sym = item.currency_symbol || getCurrencySym(item.currency);
         const card = document.createElement('div');
         card.className = 'app-card-interactive p-4 sm:p-5 rounded-3xl cursor-pointer flex flex-col gap-3';
         card.onclick = () => openReceiptDetailsModal(item.id);
@@ -1752,12 +3325,12 @@
             </div>
             <div class="text-right">
               <p class="text-[10px] font-bold uppercase" style="color: var(--text-dim);">My Share</p>
-              <p class="text-lg font-black text-emerald-500">₹${item.my_share_cost.toFixed(2)}</p>
+              <p class="text-lg font-black text-emerald-500">${sym}${item.my_share_cost.toFixed(2)}</p>
             </div>
           </div>
 
           <div class="flex items-center justify-between pt-2 border-t text-xs font-medium" style="border-color: var(--border-sub); color: var(--text-sub);">
-            <span>Receipt Code: <b style="color: var(--text-heading);">#${item.id}</b> • Bill: ₹${item.total_amount.toFixed(2)}</span>
+            <span>Code: <b style="color: var(--text-heading);">${item.join_code ? `#${item.join_code}` : `#${item.id}`}</b> • Bill: ${sym}${item.total_amount.toFixed(2)}</span>
             <span class="font-bold flex items-center gap-1 text-purple-600 dark:text-purple-300">View Breakdown & UPI →</span>
           </div>
         `;
@@ -1779,7 +3352,6 @@
         return;
       }
 
-      // Check local cached history first for instant display
       const cacheKey = `cached_history_${currentUser.id}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -1816,9 +3388,10 @@
         const data = await res.json();
         if (!res.ok) throw new Error('Receipt not found');
 
-        document.getElementById('modalStoreTitle').innerText = `${data.store_name || 'Store Receipt'} (#${data.id})`;
+        const sym = data.currency_symbol || getCurrencySym(data.currency);
+        document.getElementById('modalStoreTitle').innerText = `${data.store_name || 'Store Receipt'} (${data.join_code ? `#${data.join_code}` : `#${data.id}`})`;
         document.getElementById('modalDateSubtitle').innerText = data.uploader_name ? `Hosted by ${data.uploader_name}` : 'Stored in memory';
-        document.getElementById('modalGrandTotal').innerText = `₹${parseFloat(data.total_amount).toFixed(2)}`;
+        document.getElementById('modalGrandTotal').innerText = `${sym}${parseFloat(data.total_amount).toFixed(2)}`;
 
         startLiveSummaryPolling(receiptId, 'modalSummaryList');
         document.getElementById('receiptModal').classList.remove('hidden');
@@ -1843,7 +3416,8 @@
     // --- ACTIVE RECEIPT SHARING HELPERS ---
     function getShareableAppUrl(receiptId = null) {
       const base = window.location.origin;
-      return receiptId ? `${base}/?receipt_id=${receiptId}` : base;
+      const code = activeReceiptData?.join_code || receiptId || activeReceiptId;
+      return code ? `${base}/?code=${code}` : base;
     }
 
     async function shareDirectReceiptLink() {
@@ -1851,8 +3425,8 @@
       if (navigator.share) {
         try {
           await navigator.share({
-            title: `Split Receipt #${activeReceiptId}`,
-            text: `Join my split receipt #${activeReceiptId} to pick your shares:`,
+            title: `Split Receipt #${activeReceiptData?.join_code || activeReceiptId}`,
+            text: `Join my split bill #${activeReceiptData?.join_code || activeReceiptId} to pick your shares:`,
             url: url
           });
         } catch(e) {}
@@ -1865,7 +3439,7 @@
     async function copyDirectReceiptLink() {
       const url = getShareableAppUrl(activeReceiptId);
       await navigator.clipboard.writeText(url);
-      showToast('Receipt link copied!');
+      showToast('Receipt link copied to clipboard!');
     }
   </script>
 </body>

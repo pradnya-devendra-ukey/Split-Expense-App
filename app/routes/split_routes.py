@@ -8,13 +8,80 @@ from app.services.split_service import calculate_receipt_totals
 
 router = APIRouter(prefix="/split", tags=["Split"])
 
+@router.get("/payers/{receipt_id}")
+def get_receipt_payers(receipt_id: int, db: Session = Depends(get_db)):
+    """Retrieve the list of payers who paid for this receipt."""
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+
+    db_payers = (
+        db.query(models.ReceiptPayer, models.User)
+        .join(models.User, models.ReceiptPayer.user_id == models.User.id)
+        .filter(models.ReceiptPayer.receipt_id == receipt_id)
+        .all()
+    )
+
+    if db_payers:
+        return [
+            {
+                "user_id": u.id,
+                "user_name": u.name,
+                "upi_id": u.upi_id,
+                "amount_paid": float(rp.amount_paid)
+            }
+            for rp, u in db_payers
+        ]
+    
+    # Fallback to uploader as 100% payer
+    if receipt.uploader_id:
+        uploader = db.query(models.User).filter(models.User.id == receipt.uploader_id).first()
+        if uploader:
+            return [
+                {
+                    "user_id": uploader.id,
+                    "user_name": uploader.name,
+                    "upi_id": uploader.upi_id,
+                    "amount_paid": float(receipt.total_amount)
+                }
+            ]
+    return []
+
+@router.post("/payers")
+def set_receipt_payers(payload: schemas.SetReceiptPayersRequest, db: Session = Depends(get_db)):
+    """Save or update multiple payers for a receipt."""
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == payload.receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+
+    if not payload.payers:
+        raise HTTPException(status_code=400, detail="At least one payer must be specified")
+
+    # Clear previous payers for this receipt
+    db.query(models.ReceiptPayer).filter(models.ReceiptPayer.receipt_id == payload.receipt_id).delete(synchronize_session=False)
+
+    for p in payload.payers:
+        if p.amount_paid > 0:
+            db.add(models.ReceiptPayer(
+                receipt_id=payload.receipt_id,
+                user_id=p.user_id,
+                amount_paid=p.amount_paid
+            ))
+
+    db.commit()
+    return {"message": "Receipt payers updated successfully", "receipt_id": payload.receipt_id}
+
 @router.post("/settle")
 def settle_user_payment(payload: schemas.SettlementRequest, db: Session = Depends(get_db)):
     """Records or toggles a user's payment settlement for a specific receipt in the database."""
-    settlement = db.query(models.ReceiptSettlement).filter(
+    query = db.query(models.ReceiptSettlement).filter(
         models.ReceiptSettlement.receipt_id == payload.receipt_id,
         models.ReceiptSettlement.user_id == payload.user_id
-    ).first()
+    )
+    if payload.payee_id is not None:
+        query = query.filter(models.ReceiptSettlement.payee_id == payload.payee_id)
+
+    settlement = query.first()
 
     if settlement:
         settlement.is_paid = payload.is_paid
@@ -27,6 +94,7 @@ def settle_user_payment(payload: schemas.SettlementRequest, db: Session = Depend
         settlement = models.ReceiptSettlement(
             receipt_id=payload.receipt_id,
             user_id=payload.user_id,
+            payee_id=payload.payee_id,
             is_paid=payload.is_paid,
             amount=payload.amount,
             transaction_ref=payload.transaction_ref,
@@ -39,6 +107,7 @@ def settle_user_payment(payload: schemas.SettlementRequest, db: Session = Depend
         "message": "Payment settlement updated successfully",
         "receipt_id": payload.receipt_id,
         "user_id": payload.user_id,
+        "payee_id": payload.payee_id,
         "is_paid": settlement.is_paid,
         "settled_at": settlement.settled_at.strftime("%b %d, %I:%M %p") if settlement.settled_at else None
     }
@@ -50,17 +119,14 @@ def assign_item_shares(payload: schemas.ItemShareRequest, db: Session = Depends(
     forcing the entire payload to sum up to 1.0 at once.
     """
     for share in payload.shares:
-        # Check if this user already has an assigned share for this item
         existing_share = db.query(models.ItemShare).filter(
             models.ItemShare.item_id == payload.item_id,
             models.ItemShare.user_id == share.user_id
         ).first()
 
         if existing_share:
-            # Update fraction if share exists
             existing_share.share_fraction = share.fraction
         else:
-            # Insert new share record
             db_share = models.ItemShare(
                 item_id=payload.item_id,
                 user_id=share.user_id,

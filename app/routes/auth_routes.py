@@ -40,7 +40,8 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
             name=name,
             username=username,
             email=user_email,
-            password_hash=pwd_hash
+            password_hash=pwd_hash,
+            default_currency=(payload.default_currency or "INR").upper()
         )
         db.add(new_user)
         db.commit()
@@ -53,6 +54,7 @@ def register(payload: schemas.UserRegister, db: Session = Depends(get_db)):
             username=new_user.username,
             email=new_user.email,
             upi_id=new_user.upi_id,
+            default_currency=new_user.default_currency or "INR",
             token=token
         )
     except Exception as e:
@@ -74,7 +76,6 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
     if user.password_hash and user.password_hash != pwd_hash:
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    # If user had no password set previously, set it now
     if not user.password_hash:
         user.password_hash = pwd_hash
         user.username = username
@@ -88,6 +89,7 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
         username=user.username or username,
         email=user.email,
         upi_id=user.upi_id,
+        default_currency=user.default_currency or "INR",
         token=token
     )
 
@@ -106,6 +108,26 @@ def update_user_upi(user_id: int, payload: schemas.UserUpiUpdate, db: Session = 
         username=user.username or user.name.lower(),
         email=user.email,
         upi_id=user.upi_id,
+        default_currency=user.default_currency or "INR",
+        token=token
+    )
+
+@router.put("/user/{user_id}/currency", response_model=schemas.UserAuthResponse)
+def update_user_currency(user_id: int, payload: schemas.UserCurrencyUpdate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.default_currency = payload.default_currency.strip().upper()
+    db.commit()
+    db.refresh(user)
+    token = f"token_{user.id}_{secrets.token_hex(8)}"
+    return schemas.UserAuthResponse(
+        id=user.id,
+        name=user.name,
+        username=user.username or user.name.lower(),
+        email=user.email,
+        upi_id=user.upi_id,
+        default_currency=user.default_currency or "INR",
         token=token
     )
 

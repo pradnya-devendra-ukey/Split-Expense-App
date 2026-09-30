@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from sqlalchemy import text
-from app.routes import receipt_routes, split_routes, user_routes, auth_routes
+from app.routes import receipt_routes, split_routes, user_routes, auth_routes, group_routes
 from app import models
 
 Base.metadata.create_all(bind=engine)
@@ -14,6 +14,7 @@ def migrate_db_columns():
     try:
         with engine.connect() as conn:
             if engine.url.drivername.startswith("sqlite"):
+                # users table
                 res = conn.execute(text("PRAGMA table_info(users)")).fetchall()
                 cols = [row[1] for row in res]
                 if "username" not in cols:
@@ -22,15 +23,42 @@ def migrate_db_columns():
                     conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
                 if "upi_id" not in cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN upi_id VARCHAR(100)"))
+                if "default_currency" not in cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN default_currency VARCHAR(10) DEFAULT 'INR'"))
                 if "created_at" not in cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
+
+                # receipts table
+                res_r = conn.execute(text("PRAGMA table_info(receipts)")).fetchall()
+                cols_r = [row[1] for row in res_r]
+                if "join_code" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN join_code VARCHAR(10)"))
+                if "tax_amount" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN tax_amount NUMERIC(10,2) DEFAULT 0.0"))
+                if "tip_amount" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN tip_amount NUMERIC(10,2) DEFAULT 0.0"))
+                if "tax_split_method" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN tax_split_method VARCHAR(20) DEFAULT 'proportional'"))
+                if "currency" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN currency VARCHAR(10) DEFAULT 'INR'"))
+                if "currency_symbol" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN currency_symbol VARCHAR(5) DEFAULT '₹'"))
+                if "group_id" not in cols_r:
+                    conn.execute(text("ALTER TABLE receipts ADD COLUMN group_id INTEGER"))
+
+                # receipt_settlements table
+                res_s = conn.execute(text("PRAGMA table_info(receipt_settlements)")).fetchall()
+                cols_s = [row[1] for row in res_s]
+                if "payee_id" not in cols_s:
+                    conn.execute(text("ALTER TABLE receipt_settlements ADD COLUMN payee_id INTEGER"))
+                
                 conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Migration notice: {e}")
 
 migrate_db_columns()
 
-app = FastAPI(title="Gemini Receipt Splitter API")
+app = FastAPI(title="SmartSplit - AI Expense Splitter API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,7 +73,7 @@ def sync_postgres_sequences():
     try:
         with engine.connect() as conn:
             if not engine.url.drivername.startswith("sqlite"):
-                for table in ["users", "receipts", "items", "item_shares", "receipt_settlements"]:
+                for table in ["users", "receipts", "items", "item_shares", "receipt_settlements", "receipt_payers", "groups", "group_members"]:
                     conn.execute(text(f"""
                         SELECT setval(
                             pg_get_serial_sequence('{table}', 'id'),
@@ -60,10 +88,10 @@ def sync_postgres_sequences():
 def seed_users():
     db = SessionLocal()
     try:
-        for name in ["Alice", "Bob", "Charlie"]:
+        for name in ["Alice", "Bob", "Charlie", "David", "Emma"]:
             uname = name.lower()
             if not db.query(models.User).filter(models.User.username == uname).first():
-                db.add(models.User(name=name, email=f"{uname}@example.com", username=uname))
+                db.add(models.User(name=name, email=f"{uname}@example.com", username=uname, default_currency="INR"))
         db.commit()
     except Exception:
         db.rollback()
@@ -77,6 +105,7 @@ app.include_router(auth_routes.router)
 app.include_router(receipt_routes.router)
 app.include_router(split_routes.router)
 app.include_router(user_routes.router)
+app.include_router(group_routes.router)
 
 @app.get("/")
 def serve_frontend():
