@@ -130,7 +130,10 @@ app.include_router(group_routes.router)
 
 @app.get("/")
 def serve_frontend():
-    return FileResponse("index.html")
+    return FileResponse(
+        "index.html",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+    )
 
 @app.get("/manifest.json")
 def serve_manifest():
@@ -138,7 +141,11 @@ def serve_manifest():
 
 @app.get("/sw.js")
 def serve_sw():
-    return FileResponse("sw.js", media_type="application/javascript")
+    return FileResponse(
+        "sw.js",
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+    )
 
 @app.get("/network-ip")
 def get_network_ip():
